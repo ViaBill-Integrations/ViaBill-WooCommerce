@@ -1,0 +1,269 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+  exit;
+}
+
+if ( ! class_exists( 'Viabill_API' ) ) {
+  /**
+   * Viabill_API class
+   *
+   * @since 0.1
+   */
+  class Viabill_API {
+
+    /**
+     * API's interface.
+     *
+     * @var Viabill_Connector
+     */
+    private $connector;
+
+    /**
+     * Name of the ViaBill's approved status.
+     *
+     * @var string
+     */
+    private $approved_status;
+
+    /**
+     * Name of the ViaBill's captured status.
+     *
+     * @var string
+     */
+    private $captured_status;
+
+    /**
+     * Contains all the payment gateway settings values.
+     *
+     * @var array
+     */
+    private $settings;
+
+    /**
+     * Class constructor.
+     */
+    public function __construct() {
+      require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-connector.php' );
+      require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
+
+      $this->connector = new Viabill_Connector();
+      $this->settings  = Viabill_Main::get_gateway_settings();
+      $this->logger    = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
+
+      $this->captured_status = 'processing';
+      $this->approved_status = 'on-hold';
+    }
+
+    /**
+     * Initialize all the needed hook methods.
+     */
+    public function register() {
+      add_action( 'woocommerce_api_' . VIABILL_PLUGIN_ID, array( $this, 'do_checkout_status' ) );
+    }
+
+    /**
+     * Return full URL of the 'viabill' endpoint.
+     *
+     * @return string
+     */
+    public function get_checkout_status_url() {
+      return WC()->api_request_url( VIABILL_PLUGIN_ID );
+    }
+
+    /**
+     * Die with given message, encoded as JSON, and set HTTP response status.
+     *
+     * @param  mixed   $message
+     * @param  integer $status_code Defaults to 200.
+     */
+    private function respond( $message, $status_code = 200 ) {
+      status_header( $status_code );
+      header( 'content-type: application/json; charset=utf-8' );
+
+      $encoded_message = wp_json_encode( $message );
+      if ( ! $encoded_message ) {
+        $this->logger->log( 'Failed to encode API response message.', 'error' );
+        $encoded_message = -1;
+      }
+
+      die( $encoded_message );
+    }
+
+    /**
+     * Return assoc array of parameters from either 'php://input' (POST request
+     * body), or $_REQUEST.
+     *
+     * @return array $params
+     */
+    private function resolve_params() {
+      $params = json_decode( file_get_contents( 'php://input' ), true );
+      if ( empty( $params ) ) {
+        // NOTE: external request, signature is checked in the calling method to determine validity.
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+        $params = $_REQUEST;
+        // phpcs:enable
+      }
+
+      return $params;
+    }
+
+    /**
+     * Check if local signature matches with one from ViaBill ($params).
+     *
+     * @param  WC_Order  $order
+     * @param  array     $params
+     * @param  boolean   $use_deprecated_id Defaults to false.
+     * @return boolean
+     */
+    public function is_signature_match( $order, $params, $use_deprecated_id = false ) {
+      $transaction_id = $this->connector->get_unique_transaction_id( $order, $use_deprecated_id );
+      $order_number   = $use_deprecated_id ? $order->get_order_key() : $order->get_id();
+
+      $signature_p1 = $transaction_id . '#' . $order_number . '#' . $order->get_total() . '#' . $order->get_currency();
+      $signature_p2 = $params['status'] . '#' . $params['time'] . '#' . get_option( 'viabill_secret', '' );
+
+      $local_signature = md5( $signature_p1 . '#' . $signature_p2 );
+      $is_match        = $local_signature === $params['signature'];
+
+      if ( ! $is_match && ! $use_deprecated_id ) {
+        return $this->is_signature_match( $order, $params, true );
+      }
+
+      if (! $is_match ) {
+        $signature_mismatch_info = "Mismatch info: Local signature is ".$signature_p1. '#' . $signature_p2.' remote signature is '.$params['signature'];
+        $this->logger->log( $signature_mismatch_info, 'error' );
+      }
+
+      return $is_match;
+    }
+
+    /**
+     * Should be used as a callback URL for ViaBill API checkout request.
+     */
+    public function do_checkout_status() {
+      // Check if any parametars are received.
+      $params = $this->resolve_params();
+      // Log parametars if debug loggger is turned on.
+      $this->logger->log( wp_json_encode( $params ), 'info' );
+      if ( empty( $params ) ) {
+        $this->logger->log( 'Missing params for status API endpoint.', 'error' );
+        $this->respond(
+          array(
+            'is_success' => false,
+            'message'    => 'Missing parameters.',
+          ),
+          400
+        );
+      }
+
+      // Check if required params received.
+      foreach ( array( 'orderNumber', 'status', 'signature', 'time' ) as $required_param ) {
+        if ( ! isset( $params[ $required_param ] ) || empty( $params[ $required_param ] ) ) {
+          $this->logger->log( 'Missing ' . $required_param . ' param for status API endpoint.', 'error' );
+          $this->respond(
+            array(
+              'is_success' => false,
+              'message'    => 'Missing required parametars.',
+            ),
+            400
+          );
+        }
+      }
+
+      $order_id = wc_get_order_id_by_order_key( $params['orderNumber'] );
+      if ( empty( $order_id ) ) {
+        $order_id = intval( $params['orderNumber'] );
+      }
+
+      // Check if received order id matches any orders.
+      $order = wc_get_order( $order_id );
+      if ( ! $order ) {
+        $this->logger->log( 'Failed to find order ' . $order_id . ' for status API endpoint.', 'error' );
+        $this->respond(
+          array(
+            'is_success' => false,
+            'message'    => 'Couldn\'t find corresponding order.',
+          ),
+          500
+        );
+      }
+
+      // Check if order has been payed with ViaBill.
+      $payment_method = $order->get_payment_method();
+      if ( 'viabill_official' !== $payment_method ) {         
+        $this->logger->log( 'Order ' . $order_id . ' payment method ['.$payment_method.'] is not ViaBill.', 'error' );
+        $this->respond(
+          array(
+            'is_success' => false,
+            'message'    => 'Payment method is not ViaBill',
+          ),
+          500
+        );
+      }
+
+      // Check if signature is valid.
+      if ( ! $this->is_signature_match( $order, $params ) ) {
+        $this->logger->log( 'Signature mismatch for order ' . $order_id . ' for status API endpoint.', 'error' );
+        $order->add_order_note( __( 'Signature mismatch! Order\'s data from ViaBill is different than the one in web shop.', 'viabill' ) );
+        $this->respond(
+          array(
+            'is_success' => false,
+            'message'    => 'Signature mismatch.',
+          ),
+          500
+        );
+      }
+
+      // Check if order status has already been set.
+      if ( 'pending' !== $order->get_status() ) {
+        $this->logger->log( 'Order ' . $order_id . ' status has already been set.', 'error' );
+
+        $this->respond(
+          array(
+            'is_success' => false,
+            'message'    => 'Order status already set.',
+          ),
+          500
+        );
+      }
+
+      $status       = strtolower( htmlentities( $params['status'], ENT_QUOTES, 'UTF-8' ) );
+      $auto_capture = 'yes' === Viabill_Main::get_gateway_settings( 'auto-capture' );
+      $on_hold_mail = 'yes' === Viabill_Main::get_gateway_settings( 'automatic-capture-mail' );
+
+      if ( $auto_capture && $on_hold_mail ) {
+        add_filter( 'woocommerce_email_enabled_customer_on_hold_order', '__return_false', 10, 2 );
+      }
+
+      $this->logger->log( 'All checks passed! Order ' . $order_id . ' status returned by ViaBill: ' . $status, 'notice' );
+
+      // Saving data after each edit since auto capture also edits the same data so we prevent overwrites.
+      if ( 'approved' === $status ) {
+        $order->update_meta_data( 'viabill_status', $status );
+        $order->set_status( $this->approved_status, __( 'Order approved by ViaBill.', 'viabill' ) );
+        $order->save();
+
+        if ( $auto_capture ) {
+          $this->logger->log( 'Executed automatic capture for order ' . $order_id, 'notice' );
+          $this->connector->capture( $order );
+        }
+      } else {
+        if ( 'cancelled' === $status ) {
+          $order->set_status( 'cancelled' );
+        } elseif ( 'rejected' === $status ) {
+          $order->set_status( 'failed' );
+        }
+        $order->add_order_note( __( 'ViaBill\'s new order status', 'viabill' ) . ': ' . ucfirst( $status ) );
+        $order->update_meta_data( 'viabill_status', $status );
+        $order->save();
+      }
+
+      $this->respond(
+        array(
+          'is_success' => true,
+          'message'    => 'OK',
+        )
+      );
+    }
+  }
+}
