@@ -59,6 +59,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
      */
     public function register() {
       add_action( 'woocommerce_api_' . VIABILL_PLUGIN_ID, array( $this, 'do_checkout_status' ) );
+      add_action( 'woocommerce_api_' . VIABILL_PLUGIN_ID . '_checkout_authorize', array( $this, 'do_checkout_authorize' ) );
     }
 
     /**
@@ -265,5 +266,114 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         )
       );
     }
+
+    /**
+    * Perform the checkout authorize request
+    */
+    public function do_checkout_authorize() {
+          
+      $formData = [
+        "protocol" => "",
+        "apikey" => "",
+        "transaction" => "",
+        "order_number" => "",
+        "amount" => "",
+        "currency" => "",
+        "success_url" => "",
+        "cancel_url" => "",
+        "callback_url" => "",
+        "test" => "",
+        "customParams" => "",
+        "md5check" => ""
+      ];			
+
+      foreach ($formData as $key => &$value) {			
+        if ($key == 'customParams') {
+          $customParams = str_replace('\"', '"', $_POST[$key]);				
+          $value = json_decode($customParams, true);				
+        } else {
+          $value = $_POST[$key];
+        }
+      }			
+        
+      $payload = json_encode($formData);
+      $redirect_url = null;
+          
+      // Prepare new cURL resource
+      $ch = curl_init('https://secure.viabill.com/api/checkout-authorize/addon/woocommerce');
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);		
+      curl_setopt($ch, CURLOPT_POST, true);
+      curl_setopt($ch, CURLOPT_HEADER , true );
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);		
+      curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+      curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');  // @codingStandardsIgnoreLine
+
+      // Set HTTP Header for POST request 
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Content-Type: application/json',
+        'Content-Length: ' . strlen($payload))
+      );									
+                
+      // Submit the POST request
+      $result = curl_exec($ch);
+              
+      if ($result === FALSE) {
+        $debug_str = sprintf("cUrl error (#%d): %s<br>\n", curl_errno($ch), htmlspecialchars(curl_error($ch)));
+          } else {
+        // how big are the headers
+        $headerSize = curl_getinfo( $ch , CURLINFO_HEADER_SIZE );
+        $headerStr = substr( $result , 0 , $headerSize );
+        $bodyStr = substr( $result , $headerSize );
+
+        // convert headers to array
+        $headers = $this->headersToArray( $headerStr );
+        if (isset($headers['Location'])) {
+          $redirect_url = $headers['Location'];
+        }	
+      }
+      
+      // Close cURL session handle
+      curl_close($ch);						
+
+      if (isset($redirect_url)) {			
+        $response = json_encode(array('redirect'=>$redirect_url, 'error'=>''));
+        exit($response);			
+      } else {
+        $error_msg = 'Could not perform this checkout operation. Please try again.';
+        wp_die($error_msg);
+      }									
+    }
+      
+    public function headersToArray( $str )
+    {
+      $headers = array();
+      $headersTmpArray = explode( "\r\n" , $str );
+      for ( $i = 0 ; $i < count( $headersTmpArray ) ; ++$i )
+      {
+        // we dont care about the two \r\n lines at the end of the headers
+        if ( strlen( $headersTmpArray[$i] ) > 0 )
+        {
+          // the headers start with HTTP status codes, which do not contain a colon so we can filter them out too
+          if ( strpos( $headersTmpArray[$i] , ":" ) )
+          {
+            $headerName = substr( $headersTmpArray[$i] , 0 , strpos( $headersTmpArray[$i] , ":" ) );
+            $headerValue = substr( $headersTmpArray[$i] , strpos( $headersTmpArray[$i] , ":" )+1 );
+            $headers[$headerName] = $headerValue;
+          }
+        }
+      }
+      return $headers;
+    }
+
+    /**
+     * Return full URL of the 'viabill' endpoint.
+     *
+     * @return string
+     */
+    public function get_checkout_authorize_url() {
+      return WC()->api_request_url( VIABILL_PLUGIN_ID . '_checkout_authorize');
+    }
+
+
   }
 }

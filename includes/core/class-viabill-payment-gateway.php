@@ -7,6 +7,13 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
   return;
 }
 
+function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
+  $logo = 'viabill_logo_blue.png';    
+  $icon = '<img src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
+  return $icon;
+}
+add_filter( 'viabill_gateway_checkout_icon', 'get_gateway_icon', 10, 3 );
+
 /**
  * Register payment gateway's class as a new method of payment.
  *
@@ -386,11 +393,14 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         'cancel_url' => $order->get_cancel_order_url_raw(),
         'callback_url' => $this->api->get_checkout_status_url(),
         'test' => $is_test_mode ? 'true' : 'false',
-        'customer_info' => $customer_info_json,
+        'customParams' => $customer_info_json,
         'md5check' => $md5check,
       );
       $debug_info_str = print_r($debug_info, true);
-      $this->logger->log( $debug_info_str, 'debug');
+      $this->logger->log( $debug_info_str, 'notice');
+
+      // old one: $form_url = $this->connector->get_checkout_url();
+      $form_url = $this->api->get_checkout_authorize_url();
 
       ?>
       <form id="viabill-payment-form" action="<?php echo $this->connector->get_checkout_url(); ?>" method="post">
@@ -404,12 +414,40 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <input type="hidden" name="cancel_url" value="<?php echo $order->get_cancel_order_url_raw(); ?>">
         <input type="hidden" name="callback_url" value="<?php echo $this->api->get_checkout_status_url(); ?>">
         <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
-        <input type="hidden" name="customer_info" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="md5check" value="<?php echo $md5check; ?>">
-        <input type="submit" name="" value="submit">
-      </form>
+        <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+        <input type="hidden" name="md5check" value="<?php echo $md5check; ?>">        
+      </form>      
+
+      <script>      
+      function postViabillPaymentForm() {
+        var formData = jQuery('#viabill-payment-form').serialize();
+        jQuery.ajax({
+          type: "POST",
+          url: "<?php echo $form_url; ?>",          
+          data: formData,		
+          dataType: "json",		
+          
+          success: function(data, textStatus){			
+            if (data.redirect) {                            
+              window.location.href = data.redirect;
+            } else {
+              console.log("No data redirect after posting ViaBill Payment Form");
+              console.log(data);
+            }
+          },
+          error: function(errMsg) {
+            console.log("Unable to post ViaBill Payment Form");
+            console.log(errMsg);			
+          }
+        }); 
+      }
+      </script>      
+
+      <input type="button" value="Submit" onclick="postViabillPaymentForm()" />
+
       <?php
       'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();
+      
     }
 
     /**
@@ -420,7 +458,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       // If there's no redirect after 10 seconds, unblock the UI.
       wc_enqueue_js( "$('.woocommerce').block({message: null, overlayCSS: { background: '#fff', opacity: 0.6 }});" );
       wc_enqueue_js( "setTimeout(function(){ $('.woocommerce').unblock(); }, 10000)" );
-      wc_enqueue_js( "$('#viabill-payment-form').submit();" );
+      //wc_enqueue_js( "$('#viabill-payment-form').submit();" );
+      wc_enqueue_js( "postViabillPaymentForm();" );
     }
 
     /**
@@ -499,36 +538,36 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      * @return array
      */ 
     public function get_customer_info($order) {      
-      $info = array(
+      
+      $info = [
         'email'=>'',
-        'phone'=>'',
-        'first_name'=>'',
-        'last_name'=>'',
-        'full_name'=>'',
+        'phoneNumber'=>'',
+        'firstName'=>'',
+        'lastName'=>'',
+        'fullName'=>'',
         'address'=>'',
         'city'=>'',
-        'postal_code'=>'',
+        'postalCode'=>'',
         'country'=>''
-      );
+      ];
 
       // sanity check
       if (empty($order)) return $info;           
       
       $info['email']  = $order->get_billing_email();
-      $info['phone']  = $order->get_billing_phone();      
-      $info['first_name'] = $order->get_billing_first_name();
-      $info['last_name']  = $order->get_billing_last_name();      
-      $info['full_name'] = trim($info['first_name'].' '.$info['last_name']);
+      $info['phoneNumber']  = $order->get_billing_phone();      
+      $info['firstName'] = $order->get_billing_first_name();
+      $info['lastName']  = $order->get_billing_last_name();      
+      $info['fullName'] = trim($info['firstName'].' '.$info['lastName']);
       $address = $order->get_billing_address_1();
       $address .= ' '.$order->get_billing_address_2();
       $info['address'] = trim($address);
       $info['city']       = $order->get_billing_city();      
-      $info['postal_code']   = $order->get_billing_postcode();
+      $info['postalCode']   = $order->get_billing_postcode();
       $info['country']    = $order->get_billing_country();
 
       return $info;
     }
-
 
   }
 }
