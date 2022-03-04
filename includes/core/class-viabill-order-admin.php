@@ -727,7 +727,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
     public function hide_pending_orders( $query ) {
       global $pagenow;
 
-      $orders_archive = is_admin() && 'edit.php' === $pagenow && isset( $_GET['post_type'] ) && 'shop_order' === $_GET['post_type']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+      $post_type = isset( $_GET['post_type'] )? sanitize_key($_GET['post_type']) : '';
+      $orders_archive = is_admin() && 'edit.php' === $pagenow && 'shop_order' === $post_type; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
       $pending_hidden = isset( $this->settings['pending-orders-hidden'] ) && 'yes' === $this->settings['pending-orders-hidden'];
 
       if ( $orders_archive && $pending_hidden ) {

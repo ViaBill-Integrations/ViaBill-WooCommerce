@@ -169,9 +169,9 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         echo __( 'button to send your request', 'viabill'); 
         ?>        
     </div>
-    <form id="tech_support_form" action="<?php echo $action_url; ?>" method="post">
+    <form id="tech_support_form" action="<?php echo esc_url($action_url); ?>" method="post">
     <fieldset>
-        <legend class="w-auto text-primary"><?php echo __( 'Issue Description', 'viabill'); ?></legend>        
+        <legend class="w-auto text-primary"><?php echo __( 'Issue Description', 'viabill'); ?></legend>
         <div class="form-group">
             <label><?php echo __( 'Your Name', 'viabill');?></label>
             <input class="form-control" type="text" required="true" name="ticket_info[name]"
@@ -193,75 +193,75 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         <div class="form-group">
             <label><?php echo __( 'Store Name', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-                 value="<?php echo $storeName; ?>" name="shop_info[name]" />
+                 value="<?php echo esc_attr($storeName); ?>" name="shop_info[name]" />
         </div>                
         <div class="form-group">
             <label><?php echo __( 'Store URL', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo $storeURL; ?>" name="shop_info[url]" />
+             value="<?php echo esc_url($storeURL); ?>" name="shop_info[url]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Store Email', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo $storeEmail; ?>" name="shop_info[email]" />
+             value="<?php echo sanitize_email($storeEmail); ?>" name="shop_info[email]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Eshop Country', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo $storeCountry; ?>" name="shop_info[country]" />
+             value="<?php echo esc_attr($storeCountry); ?>" name="shop_info[country]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Eshop Language', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo $langCode; ?>" name="shop_info[language]" />
+             value="<?php echo esc_attr($langCode); ?>" name="shop_info[language]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Eshop Currency', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo $currencyCode; ?>" name="shop_info[currency]" />
+             value="<?php echo esc_attr($currencyCode); ?>" name="shop_info[currency]" />
         </div>                
         <div class="form-group">
             <label><?php echo __( 'Module Version', 'viabill');?></label>
             <input class="form-control" type="text"
-             value="<?php echo $module_version; ?>" name="shop_info[addon_version]" />
+             value="<?php echo esc_attr($module_version); ?>" name="shop_info[addon_version]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'WooCommerce Version', 'viabill');?></label>
             <input type="hidden" value="woocommerce" name="shop_info[platform]" />
             <input class="form-control" type="text"
-             value="<?php echo $platform_version; ?>" name="shop_info[platform_version]" />
+             value="<?php echo esc_attr($platform_version); ?>" name="shop_info[platform_version]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'PHP Version', 'viabill');?></label>
             <input class="form-control" type="text"
-             value="<?php echo $php_version; ?>" name="shop_info[php_version]" />
+             value="<?php echo esc_attr($php_version); ?>" name="shop_info[php_version]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Memory Limit', 'viabill');?></label>
             <input class="form-control" type="text"
-             value="<?php echo $memory_limit; ?>" name="shop_info[memory_limit]" />
+             value="<?php echo esc_attr($memory_limit); ?>" name="shop_info[memory_limit]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'O/S', 'viabill');?></label>
             <input class="form-control" type="text"
-             value="<?php echo $os; ?>" name="shop_info[os]" />
+             value="<?php echo esc_attr($os); ?>" name="shop_info[os]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Debug File', 'viabill');?></label>
             <input class="form-control" type="text"
-             value="<?php echo $debug_file; ?>" name="shop_info[debug_file]" />
+             value="<?php echo esc_attr($debug_file); ?>" name="shop_info[debug_file]" />
         </div>
         <div class="form-group">
             <label><?php echo __( 'Debug Data', 'viabill');?></label>
             <textarea class="form-control"
-             name="shop_info[debug_data]"><?php echo $debug_log_entries; ?></textarea>             
+             name="shop_info[debug_data]"><?php echo esc_html($debug_log_entries); ?></textarea>
         </div>        
     </fieldset>            
     <div class="form-group form-check">
         <input type="checkbox" value="accepted" required="true"
          class="form-check-input" name="terms_of_use" id="terms_of_use"/>
           <label class="form-check-label"><?php echo __( 'I have read and accept the', 'viabill');?>
-           <a href="<?php echo $terms_of_use_url; ?>"><?php echo __( 'Terms and Conditions', 'viabill');?></a></label>
+           <a href="<?php echo esc_url($terms_of_use_url); ?>"><?php echo __( 'Terms and Conditions', 'viabill');?></a></label>
     </div>           
     <button type="button" onclick="validateAndSubmit()" class="button-primary">
     <?php echo __( 'Send Support Request', 'viabill');?></button>
@@ -385,33 +385,30 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         
         return $params;
     }
-    
-    protected function getContactFormOutput()
-    {
-        $request = $_REQUEST;
-
-        $ticket_info = $request['ticket_info'];
-        $shop_info = $request['shop_info'];
-        $platform = $shop_info['platform'];
         
-        $platform = $shop_info['platform'];
-        $merchant_email = filter_var(trim($ticket_info['email']), FILTER_VALIDATE_EMAIL);
-        $shop_url = $shop_info['url'];
+    protected function getContactFormOutput()
+    {        
+        $platform = sanitize_text_field($_REQUEST['shop_info']['platform']);                
+        $merchant_email = sanitize_email(trim($_REQUEST['ticket_info']['email']));
+        $shop_url =  sanitize_url($_REQUEST['shop_info']['url']);
+        $contact_name = sanitize_text_field($_REQUEST['ticket_info']['name']);
+        $message = sanitize_textarea_field($_REQUEST['ticket_info']['issue']);                                                       
         
         $shop_info_html = '<ul>';
-        foreach ($shop_info as $key => $value) {
-            $label = strtoupper(str_replace('_', ' ', $key));
+        foreach ($_REQUEST['shop_info'] as $key => $value) {
+            $label = strtoupper(str_replace('_', ' ', sanitize_key($key)));            
             if ($key == 'debug_data') {
                 $shop_info_html .= '<li><strong>'.$label.'</strong><br/>
                 <div style="background-color: #FFFFCC;">'.
-                    htmlentities($value, ENT_QUOTES, "UTF-8").'</div></li>';
+                    esc_html($value).'</div></li>';
             } elseif ($key == 'error_data') {
                 $shop_info_html .= '<li><strong>'.$label.'</strong><br/>
                 <div style="background-color: #FFCCCC;">'.
-                    htmlentities($value, ENT_QUOTES, "UTF-8").'</div>
+                    esc_html($value).'</div>
                 </li>';
             } else {
-                $shop_info_html .= '<li><strong>'.$label.'</strong>: '.$value.'</li>';
+                $shop_info_html .= '<li><strong>'.esc_html($label).
+                    '</strong>: '.esc_attr($value).'</li>';
             }
         }
         $shop_info_html .= '</ul>';
@@ -431,21 +428,20 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         $email_body .= "<h3>Shop Info</h3>";
         $email_body .= $shop_info_html;
                 
-        $sender_email = $this->getSenderEmail($request);
-        $to = self::VIABILL_TECH_SUPPORT_EMAIL;
-        $merchant_email = $ticket_info['email'];
+        $sender_email = $this->getSenderEmail($merchant_email);
+        $to = self::VIABILL_TECH_SUPPORT_EMAIL;        
         $support_email = self::VIABILL_TECH_SUPPORT_EMAIL;
 
-        $success = $this->sendMail($to, $merchant_email, $email_subject, $email_body);
+        $success = $this->sendMail($to, $sender_email, $email_subject, $email_body);
         if (!$success) {
             // use another method
-            $success = $this->sendMail($to, $merchant_email, $email_subject, $email_body, true);
+            $success = $this->sendMail($to, $sender_email, $email_subject, $email_body, true);
         }
         
         if ($success) {
             $success_msg = '';
             $success_msg = __('Your request has been received successfully!', 'viabill').
-                __('We will get back to you soon at ', 'viabill')."<strong>{$merchant_email}</strong>. ".
+                __('We will get back to you soon at ', 'viabill')."<strong>{$sender_email}</strong>. ".
                 __('You may also contact us at ', 'viabill')."<strong>{$support_email}</strong>.";
             $body = "<div class='alert alert-success'><div class='alert-text'>
                 <strong>".__('Success!')."</strong><br/>".
@@ -463,8 +459,8 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         $html = $body;
    
         return $html;
-    }
-
+    }   
+    
     protected function sendMail($to, $from, $email_subject, $email_body)
     {
         $success = false;
@@ -485,20 +481,12 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         return $this->get_admin_url();        
     }
     
-    protected function getSenderEmail($request)
+    protected function getSenderEmail($merchant_email)
     {
         $senderEmail = '';
         
         $site_host = wc_get_cart_url();
-        
-        $merchant_email = '';
-        if (isset($request['ticket_info'])) {
-            $ticket_info = $request['ticket_info'];
-            if (isset($ticket_info['email'])) {
-                $merchant_email = filter_var(trim($ticket_info['email']), FILTER_VALIDATE_EMAIL);
-            }
-        }
-        
+                
         // check if merchant email shares the same domain with the site host
         if (!empty($merchant_email)) {
             list($account, $domain) = explode('@', $merchant_email, 2);

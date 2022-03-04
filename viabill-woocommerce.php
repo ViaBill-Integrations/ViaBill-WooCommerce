@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.14
+ * Version: 1.1.15
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -13,7 +13,7 @@
  * Domain Path: /languages
  *
  * WC requires at least: 3.3
- * WC tested up to: 5.0.0
+ * WC tested up to: 5.9.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -205,7 +205,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.14' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.15' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -297,8 +297,8 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
     public static function check_for_other_viabill_gateways() {          
       $can_display_warning = false;
 
-      $page = (isset($_REQUEST['page']))?$_REQUEST['page']:'';
-      $tab = (isset($_REQUEST['tab']))?$_REQUEST['tab']:'';
+      $page = (isset($_REQUEST['page']))?sanitize_key($_REQUEST['page']):'';
+      $tab = (isset($_REQUEST['tab']))?sanitize_key($_REQUEST['tab']):'';
       if ($page == 'wc-settings') {
         switch ($tab) {
           case 'checkout':

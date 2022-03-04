@@ -40,6 +40,13 @@ if ( ! class_exists( 'Viabill_API' ) ) {
     private $settings;
 
     /**
+     * Logger.
+     *
+     * @var Viabill_Logger
+     */
+    private $logger;
+
+    /**
      * Class constructor.
      */
     public function __construct() {
@@ -289,52 +296,48 @@ if ( ! class_exists( 'Viabill_API' ) ) {
 
       foreach ($formData as $key => &$value) {			
         if ($key == 'customParams') {
-          $customParams = str_replace('\"', '"', $_POST[$key]);				
+          $customParams = str_replace('\"', '"', sanitize_text_field($_POST[$key]));
           $value = json_decode($customParams, true);				
         } else {
-          $value = $_POST[$key];
+          $value = sanitize_text_field($_POST[$key]);
         }
       }			
         
       $payload = json_encode($formData);
-      $redirect_url = null;
-          
-      // Prepare new cURL resource
-      $ch = curl_init('https://secure.viabill.com/api/checkout-authorize/addon/woocommerce');
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);		
-      curl_setopt($ch, CURLOPT_POST, true);
-      curl_setopt($ch, CURLOPT_HEADER , true );
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);		
-      curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-      curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');  // @codingStandardsIgnoreLine
-
-      // Set HTTP Header for POST request 
-      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'Content-Type: application/json',
-        'Content-Length: ' . strlen($payload))
-      );									
-                
-      // Submit the POST request
-      $result = curl_exec($ch);
-              
-      if ($result === FALSE) {
-        $debug_str = sprintf("cUrl error (#%d): %s<br>\n", curl_errno($ch), htmlspecialchars(curl_error($ch)));
-          } else {
-        // how big are the headers
-        $headerSize = curl_getinfo( $ch , CURLINFO_HEADER_SIZE );
-        $headerStr = substr( $result , 0 , $headerSize );
-        $bodyStr = substr( $result , $headerSize );
-
-        // convert headers to array
-        $headers = $this->headersToArray( $headerStr );
-        if (isset($headers['Location'])) {
-          $redirect_url = $headers['Location'];
-        }	
-      }
       
-      // Close cURL session handle
-      curl_close($ch);						
+      $redirect_url = null;
+      $error_msg = null;
 
+      //++++++++++++++++++++++++++++++++++++++++
+      $url = 'https://secure.viabill.com/api/checkout-authorize/addon/woocommerce';
+
+      $method = 'POST';
+
+      $headers = [
+        //'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'User-Agent' => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+      ];                   
+
+      $args = array(
+        'method' => $method,            
+        'headers' => $headers,
+        'body' => $payload,
+        'redirection' => 0,
+        'httpversion' => '1.1',
+        'sslverify' => false,
+        'timeout' => 60
+      );
+        
+      $data = wp_remote_post($url, $args);
+
+      if (is_wp_error($data)) {        
+        $error_msg = $data->get_error_message();    
+        $this->logger->log( 'Failed to execute do_checkout_authorize(): '.$error_msg, 'critical' );
+      } else if (is_array($data)) { 
+        $redirect_url = wp_remote_retrieve_header( $data, 'Location' );                
+      }  
+      	
       if (isset($redirect_url)) {			
         $response = json_encode(array('redirect'=>$redirect_url, 'error'=>''));
         exit($response);			

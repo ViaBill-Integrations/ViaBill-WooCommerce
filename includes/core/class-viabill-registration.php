@@ -360,7 +360,7 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
                 <?php $forgot_pass_url = 'https://viabill.com/auth/forgot/'; ?>
                 <?php $lang = strtoupper( get_locale() ); ?>
                 <?php $forgot_pass_url .= ! empty( $lang ) ? '?lang=' . $lang : ''; ?>
-                <a href="<?php echo $forgot_pass_url; ?>" target="_blank"><?php esc_html_e( 'Forgot password?', 'viabill' ); ?></a>
+                <a href="<?php echo esc_url($forgot_pass_url); ?>" target="_blank"><?php esc_html_e( 'Forgot password?', 'viabill' ); ?></a>
               </td>
             </tr>
             <?php $this->do_submit( 'viabill-login', __( 'Login', 'viabill' ), 'viabill-login-action', 'viabill-login-nonce' ); ?>

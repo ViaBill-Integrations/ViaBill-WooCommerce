@@ -205,7 +205,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         },
         100
       );
-    }            
+    }
   
     /**
      * Echo data-dynamic-price HTML attribute if the value is available in the
@@ -216,9 +216,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      * @return void
      */
     public static function display_dynamic_price( $target, $settings ) {
-      $name = 'pricetag-' . $target . '-dynamic-price';
+      $name = 'pricetag-' . esc_attr($target) . '-dynamic-price';
       if ( isset( $settings[ $name ] ) && ! empty( $settings[ $name ] ) ) {
-        echo 'data-dynamic-price="' . $settings[ $name ] . '"';
+        echo 'data-dynamic-price="' . esc_attr($settings[ $name ]) . '"';
       }
     }
 
@@ -232,9 +232,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      * @return void
      */
     public static function display_dynamic_price_trigger( $target, $settings ) {
-      $name = 'pricetag-' . $target . '-dynamic-price-trigger';
+      $name = 'pricetag-' . esc_attr($target) . '-dynamic-price-trigger';
       if ( isset( $settings[ $name ] ) && ! empty( $settings[ $name ] ) ) {
-        echo 'data-dynamic-price-triggers="' . $settings[ $name ] . '"';
+        echo 'data-dynamic-price-triggers="' . esc_attr($settings[ $name ]) . '"';
       }
     }
 
@@ -314,23 +314,22 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         )
       );
 
-      array_walk(
-        $attrs,
-        function( &$attr_value, $attr_name ) {
-          $attr_value = 'data-' . $attr_name . '="' . $attr_value . '"';
-        }
-      );
-
-      // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
-      if ( $position ) {
-        $attrs[] = 'data-append-target="' . $position . '"';
-      } else {
-        $attrs[] = 'class="viabill-pricetag"';
-      }
-
       ?>
-      <div class="viabill-pricetag-wrap" <?php echo $style ? 'style="' . $style . '"' : '' ?>>
-        <div <?php echo implode( ' ', $attrs ); ?>></div>
+      <div class="viabill-pricetag-wrap" <?php echo $style ? 'style="' . esc_attr($style) . '"' : '' ?>>
+        <div        
+        <?php 
+          foreach ($attrs as $attr_name => $attr_value) {
+            echo 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
+          } 
+          // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
+          if ( $position ) {
+            echo 'data-append-target="' . esc_attr($position) . '" ';            
+          } else {
+            echo 'class="viabill-pricetag" ';
+          }         
+        ?>
+        >
+        </div>
       </div>
       <?php
     }

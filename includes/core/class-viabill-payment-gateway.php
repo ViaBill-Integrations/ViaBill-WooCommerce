@@ -403,19 +403,19 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       $form_url = $this->api->get_checkout_authorize_url();
 
       ?>
-      <form id="viabill-payment-form" action="<?php echo $this->connector->get_checkout_url(); ?>" method="post">
+      <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
         <input type="hidden" name="protocol" value="3.0">
-        <input type="hidden" name="apikey" value="<?php echo $this->merchant->get_key(); ?>">
-        <input type="hidden" name="transaction" value="<?php echo $transaction; ?>">
-        <input type="hidden" name="order_number" value="<?php echo $order->get_id(); ?>">
-        <input type="hidden" name="amount" value="<?php echo $order->get_total(); ?>">
-        <input type="hidden" name="currency" value="<?php echo $order->get_currency(); ?>">
-        <input type="hidden" name="success_url" value="<?php echo $order->get_checkout_order_received_url(); ?>">
-        <input type="hidden" name="cancel_url" value="<?php echo $order->get_cancel_order_url_raw(); ?>">
-        <input type="hidden" name="callback_url" value="<?php echo $this->api->get_checkout_status_url(); ?>">
+        <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
+        <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
+        <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
+        <input type="hidden" name="amount" value="<?php echo esc_attr($order->get_total()); ?>">
+        <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
+        <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
+        <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
+        <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url()); ?>">
         <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
         <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="md5check" value="<?php echo $md5check; ?>">        
+        <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
       </form>      
 
       <script>      
