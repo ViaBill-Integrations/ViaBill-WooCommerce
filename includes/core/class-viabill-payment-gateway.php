@@ -8,8 +8,8 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 }
 
 function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
-  $logo = 'viabill_logo_blue.png';    
-  $icon = '<img src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
+  $logo = 'viabill_logo_primary.png';
+  $icon = '<img class="viabill_logo" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
   return $icon;
 }
 add_filter( 'viabill_gateway_checkout_icon', 'get_gateway_icon', 10, 3 );
