@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.16
+ * Version: 1.1.18
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -205,7 +205,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.16' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.18' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -689,6 +689,6 @@ add_action('rest_api_init', function () {
   register_rest_route( 'viabill', 'disable-payment/thirdparty', array (
     'methods'  => 'GET',
     'callback' => array( 'Viabill_Main', 'disable_third_party_payment' ),
-    //'permission_callback' => function() { return current_user_can('administrator'); }
+    'permission_callback' => function() { return true; }
   ));
 });

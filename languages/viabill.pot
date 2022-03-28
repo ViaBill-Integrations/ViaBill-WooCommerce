@@ -963,3 +963,15 @@ msgstr ""
 #. Description of the plugin/theme
 msgid "ViaBill Gateway for WooCommerce."
 msgstr ""
+
+msgid "After Payment is Authorized"
+msgstr ""
+
+msgid "Select the order status after the payment is authorized by Viabill"
+msgstr ""
+
+msgid "After Payment is Captured"
+msgstr ""
+
+msgid "Select the order status after the payment is fully captured by Viabill"
+msgstr ""

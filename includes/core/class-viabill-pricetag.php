@@ -133,16 +133,16 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
     public static function getValidCountryLanguageCurrencyCombination() {
       $valid = false;
 
-      $currency = self:: get_supported_currency();
-      $language = self::get_supported_language();
+      $country = self::get_supported_country();
+      $currency = self::get_supported_currency();
+      $language = self::get_supported_language();      
       
-      if ((!empty($language))&&(!empty($currency))) {
-        $country = self::get_supported_country();
+      if ((!empty($country))&&(!empty($language))&&(!empty($currency))) {
         switch ($country) {
           case 'US':
             if (($language != 'en')&& ($language != 'es')) {
               $language = 'en';
-            }
+            }            
             if ($currency != 'USD') {
                $valid = false;
             } else {              
@@ -297,6 +297,15 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       $position              = Viabill_Main::get_gateway_settings( 'pricetag-position-' . $target );
       $style                 = Viabill_Main::get_gateway_settings( 'pricetag-style-' . $target );      
       $combination           = self::getValidCountryLanguageCurrencyCombination();
+
+      // if no valid combination found, do not display the pricetag
+      if (!$combination) {
+        $currency = self::get_supported_currency();
+        $language = self::get_supported_language();          
+        $country = self::get_supported_country();
+        echo '<span style="display:none">No pricetag is shown as there is an invalid combination of language ['.$language.'] /currency ['.$currency.'] /country ['.$country.']</span>';
+        return;
+      } 
       
       $language = $combination['language'];
       $currency = $combination['currency'];

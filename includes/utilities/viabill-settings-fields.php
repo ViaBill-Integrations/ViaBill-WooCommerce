@@ -3,6 +3,21 @@ if ( ! defined( 'ABSPATH' ) ) {
   exit;
 }
 
+$order_status_options = array();
+$available_order_statuses = wc_get_order_statuses();
+foreach ($available_order_statuses as $key => $value) {
+  $key = str_replace('wc-', '', $key);
+  $order_status_options[$key] = $value;
+}
+
+// make sure that the two default order statuses are present
+if (!array_key_exists('on-hold', $order_status_options)) {
+  $order_status_options['on-hold'] = 'On-hold';
+}
+if (!array_key_exists('processing', $order_status_options)) {
+  $order_status_options['processing'] = 'Processing';
+}
+
 return array(
   'enabled' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'    => __( 'Enable', 'viabill' ),
@@ -52,6 +67,53 @@ return array(
     'default'     => 'no',
     'desc_tip'    => true,
   ),
+  'order_status_after_authorized_payment' => array(
+    'title'	=> __( 'After Payment is Authorized', 'viabill' ),
+    'type'	=> 'select',    
+    'description' => __( 'Select the order status after the payment is authorized by Viabill', 'viabill' ),
+    'options'	=> $order_status_options,
+    'default'  => 'on-hold',
+    'class'    => 'wc-enhanced-select',
+    'desc_tip'    => false,
+  ),
+  'order_status_after_captured_payment' => array(
+    'title'	=> __( 'After Payment is Captured', 'viabill' ),
+    'type'	=> 'select',    
+    'description' => __( 'Select the order status after the payment is fully captured by Viabill', 'viabill' ),
+    'options'	=> $order_status_options,
+    'class'    => 'wc-enhanced-select',
+    'default'  => 'processing',
+    'desc_tip'    => false,
+  ),
+  'auto-capture' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Auto-capture payments', 'viabill' ),
+    'type'        => 'select',
+    'class'       => 'wc-enhanced-select',
+    'description' => __( 'Select this option to automatically capture all approved ViaBill orders. All automatically captured orders will be updated with an order status of, "Processing". Selecting this option will also disable the option to partially capture the order amount.', 'viabill' ),
+    'default'     => 'no',
+    'options'     => array(
+      'no'  => __( 'No', 'viabill' ),
+      'yes' => __( 'Yes', 'viabill' ),
+    ),
+  ),
+  'automatic-capture-mail' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Auto-capture email', 'viabill' ),
+    'type'        => 'checkbox',
+    'label'       => __( 'Only send email for captured orders.', 'viabill' ),
+    'description' => __( 'If the Auto-capture is enabled this setting will skip sending email for approved order and will only send mail when the order is captured.', 'viabill' ),
+    'default'     => 'no',
+  ),
+  'capture-order-on-status-switch' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Capture order on status change', 'viabill' ),
+    'type'        => 'select',
+    'class'       => 'wc-enhanced-select',
+    'description' => __( 'Select this option in order to capture the whole order amount by manually switching the order status from, "On Hold" to "Processing".', 'viabill' ),
+    'default'     => 'no',
+    'options'     => array(
+      'no'  => __( 'No', 'viabill' ),
+      'yes' => __( 'Yes', 'viabill' ),
+    ),
+  ),  
   'use-logger' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'       => __( 'Debug log', 'viabill' ),
     'type'        => 'checkbox',
@@ -80,29 +142,11 @@ return array(
     'description' => __( 'With this option enabled changing order status to "Refunded" will automatically refund the order by ViaBill payment gateway.', 'viabill' ),
     'default'     => 'no',
   ),
-  'auto-capture' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
-    'title'       => __( 'Auto-capture payments', 'viabill' ),
+  'checkout-hide' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Hide in Checkout', 'viabill' ),
     'type'        => 'select',
     'class'       => 'wc-enhanced-select',
-    'description' => __( 'Select this option to automatically capture all approved ViaBill orders. All automatically captured orders will be updated with an order status of, "Processing". Selecting this option will also disable the option to partially capture the order amount.', 'viabill' ),
-    'default'     => 'no',
-    'options'     => array(
-      'no'  => __( 'No', 'viabill' ),
-      'yes' => __( 'Yes', 'viabill' ),
-    ),
-  ),
-  'automatic-capture-mail' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
-    'title'       => __( 'Auto-capture email', 'viabill' ),
-    'type'        => 'checkbox',
-    'label'       => __( 'Only send email for captured orders.', 'viabill' ),
-    'description' => __( 'If the Auto-capture is enabled this setting will skip sending email for approved order and will only send mail when the order is captured.', 'viabill' ),
-    'default'     => 'no',
-  ),
-  'capture-order-on-status-switch' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
-    'title'       => __( 'Capture order on status change', 'viabill' ),
-    'type'        => 'select',
-    'class'       => 'wc-enhanced-select',
-    'description' => __( 'Select this option in order to capture the whole order amount by manually switching the order status from, "On Hold" to "Processing".', 'viabill' ),
+    'description' => __( 'If enabled, the Viabill payment method will not be available in the checkout step.', 'viabill' ),
     'default'     => 'no',
     'options'     => array(
       'no'  => __( 'No', 'viabill' ),

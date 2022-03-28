@@ -8,8 +8,8 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 }
 
 function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
-  $logo = 'viabill_logo_primary.png';
-  $icon = '<img class="viabill_logo" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
+  $logo = 'viabill_logo_tagline.png';
+  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
   return $icon;
 }
 add_filter( 'viabill_gateway_checkout_icon', 'get_gateway_icon', 10, 3 );
@@ -73,6 +73,13 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      */
     private $api;
 
+    /**
+     * Availability
+     * 
+     * @var boolean
+     */
+    private $checkout_hide;
+
     private $woocommerce_currency_supported_wp_notice_raised = false;
 
     /**
@@ -95,7 +102,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
       $this->id           = VIABILL_PLUGIN_ID;
       $this->method_title = __( 'ViaBill', 'viabill' );
-      $this->has_fields   = true;
+      $this->has_fields   = true;      
 
       $this->init_form_fields();
       $this->init_settings();
@@ -104,6 +111,11 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       $this->merchant = new Viabill_Merchant_Profile();
       $this->notices  = new Viabill_Notices();
       $this->support  = new Viabill_Support();
+
+      $this->checkout_hide = $this->is_viabill_payment_hidden();
+      if ($this->checkout_hide) {
+        $this->enabled = false;
+      }
 
       $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
@@ -253,6 +265,20 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       if ( ! empty( $icon ) ) {
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
       }
+    }
+
+
+    /**
+    * Override the default payment method title and visually hide it
+    *
+    * @override
+    */
+    public function get_title() {
+      if (is_admin()) {
+        return parent::get_title();
+      } else {
+        return '';
+      }      
     }
 
     /**
@@ -528,6 +554,16 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       }
 
       return $fields;
+    }
+
+    /**
+     * 
+     */
+    public function is_viabill_payment_hidden() {
+      if ( isset( $this->settings['checkout-hide'] ) && 'yes' === $this->settings['checkout-hide'] ) {
+         return true;
+      }
+      return false;
     }
    
     /**

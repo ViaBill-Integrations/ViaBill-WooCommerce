@@ -57,8 +57,8 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $this->settings  = Viabill_Main::get_gateway_settings();
       $this->logger    = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
-      $this->captured_status = 'processing';
-      $this->approved_status = 'on-hold';
+      $this->captured_status = (isset($this->settings['order_status_after_captured_payment']))?$this->settings['order_status_after_captured_payment']:'processing';
+      $this->approved_status = (isset($this->settings['order_status_after_authorized_payment']))?$this->settings['order_status_after_authorized_payment']:'on-hold';
     }
 
     /**

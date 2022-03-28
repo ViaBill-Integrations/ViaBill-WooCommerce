@@ -34,6 +34,13 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     private $logger;
 
     /**
+     * Contains all the payment gateway settings values.
+     *
+     * @var array
+     */
+    private $settings;
+
+    /**
      * Name of the ViaBill's approved status.
      *
      * @var string
@@ -53,11 +60,11 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     public function __construct() {
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
 
-      $settings     = Viabill_Main::get_gateway_settings();
-      $this->logger = new Viabill_Logger( isset( $settings['use-logger'] ) && 'yes' === $settings['use-logger'] );
+      $this->settings     = Viabill_Main::get_gateway_settings();
+      $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
-      $this->captured_status = 'processing';
-      $this->approved_status = 'on-hold';
+      $this->captured_status = (isset($this->settings['order_status_after_captured_payment']))?$this->settings['order_status_after_captured_payment']:'processing';
+      $this->approved_status = (isset($this->settings['order_status_after_authorized_payment']))?$this->settings['order_status_after_authorized_payment']:'on-hold';
     }
 
     /**

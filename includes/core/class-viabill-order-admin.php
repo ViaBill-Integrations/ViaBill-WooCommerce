@@ -53,13 +53,11 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
 
       $this->connector = new Viabill_Connector();
-
       $this->settings = Viabill_Main::get_gateway_settings();
-
       $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
-      $this->captured_status = 'processing';
-      $this->approved_status = 'on-hold';
+      $this->captured_status = (isset($this->settings['order_status_after_captured_payment']))?$this->settings['order_status_after_captured_payment']:'processing';
+      $this->approved_status = (isset($this->settings['order_status_after_authorized_payment']))?$this->settings['order_status_after_authorized_payment']:'on-hold';      
 
       add_action( 'woocommerce_order_item_add_action_buttons', array( $this, 'display_capture_button' ), 10, 1 );
       add_action( 'woocommerce_order_item_add_action_buttons', array( $this, 'display_cancel_order_button' ), 20, 1 );
