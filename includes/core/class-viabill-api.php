@@ -297,7 +297,15 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       foreach ($formData as $key => &$value) {			
         if ($key == 'customParams') {
           $customParams = str_replace('\"', '"', sanitize_text_field($_POST[$key]));
-          $value = json_decode($customParams, true);				
+          // double json decode 
+          if (!empty($customParams)) {
+            $customParams = json_decode($customParams, true);
+            foreach ($customParams as $cpk => &$cpv) {
+              $dcpv = json_decode('{"'.$cpk.'":"'.$cpv.'"}', true);
+              $cpv = $dcpv[$cpk];
+            }
+            $value = $customParams;
+          }          
         } else {
           $value = sanitize_text_field($_POST[$key]);
         }
