@@ -7,9 +7,9 @@ ViaBill is changing the way people shop online. We offer a payment solution that
 For more information about ViaBill, please visit our [ViaBill](https://viabill.com) site.
 
 ## Pre-Requisites
-* WordPress tested up to 5.9.3
+* WordPress tested up to 6.0
 * WooCommerce 3.3 or greater
-* PHP version 5.6 or greater (PHP 7.2 or greater is recommended).
+* PHP version 5.6 or greater (PHP 7.4 or greater is recommended).
 * SSL must be installed on your site and active on your Checkout pages.
 
 ## Installation and Configuration

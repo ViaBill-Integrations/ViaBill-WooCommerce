@@ -8,7 +8,25 @@ if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 }
 
 function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
-  $logo = 'viabill_logo_primary.png';  
+  $logo = 'viabill_logo_primary.png';
+
+  $locale   = get_locale();
+  $language = null;
+
+  if ( strpos( $locale, '_' ) !== false ) {
+    $locale_parts = explode( '_', $locale );
+    $language     = strtolower($locale_parts[0]);
+  } elseif ( strlen( $locale ) === 2 ) {
+    $language = strtolower($locale);
+  }
+  
+  switch ($language) {
+     case 'da':
+     case 'es':
+     case 'en':
+        $logo = 'ViaBill_Logo_'.$language.'.png';
+        break;
+  }
 
   $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
   return $icon;

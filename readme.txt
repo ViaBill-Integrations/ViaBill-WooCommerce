@@ -2,9 +2,9 @@
 Contributors: viabill
 Tags: viabill, woocommerce, gateway, payment
 Requires at least: 5.0
-Tested up to: 5.9.3
+Tested up to: 6.0
 Requires PHP: 5.6
-Stable tag: 1.1.20
+Stable tag: 1.1.21
 License: GPL v3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -21,7 +21,7 @@ ViaBill - WooCommerce is a plugin that allows you to make payments via ViaBill p
 = Minimum Requirements =
 
 * WooCommerce 3.3 or greater.
-* PHP version 5.6 or greater (PHP 7.2 or greater is recommended).
+* PHP version 5.6 or greater (PHP 7.4 or greater is recommended).
 * SSL must be installed on your site and active on your Checkout pages.
 
 = Install =
@@ -33,6 +33,9 @@ ViaBill - WooCommerce is a plugin that allows you to make payments via ViaBill p
 For more installation options check the [official WordPress documentation](https://wordpress.org/support/article/managing-plugins/#manual-plugin-installation) about installing plugins.
 
 == Changelog ==
+= 1.1.21 =
+* Made logo language specific
+
 = 1.1.20 =
 * Changed pre-fill customer info encoding
 
