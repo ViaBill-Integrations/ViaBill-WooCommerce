@@ -548,10 +548,22 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      */
     public function get_unique_transaction_id( $order, $use_deprecated_id = false ) {
       if ( $use_deprecated_id ) {
-        return $order->get_id();
+        $transaction_id = $order->get_order_key();
+      } else {
+        $transaction_id = 'OrdNum_'. trim( str_replace( '#', '', $order->get_order_number() ) );
       }
+    
+      return $transaction_id;
+    }
 
-      return $order->get_order_key();
+    public function get_order_number($order, $use_deprecated_id = false ) {
+      if ( $use_deprecated_id ) { 
+        $order_id = $order->get_order_key();
+      } else {
+        $order_id = $order->get_id();
+      }
+      
+      return $order_id;      
     }
 
     /**

@@ -125,7 +125,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
      */
     public function is_signature_match( $order, $params, $use_deprecated_id = false ) {
       $transaction_id = $this->connector->get_unique_transaction_id( $order, $use_deprecated_id );
-      $order_number   = $use_deprecated_id ? $order->get_order_key() : $order->get_id();
+      $order_number   = $this->connector->get_order_number( $order, $use_deprecated_id );
 
       $signature_p1 = $transaction_id . '#' . $order_number . '#' . $order->get_total() . '#' . $order->get_currency();
       $signature_p2 = $params['status'] . '#' . $params['time'] . '#' . get_option( 'viabill_secret', '' );
