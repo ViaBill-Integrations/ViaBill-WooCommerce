@@ -427,6 +427,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
       $customer_info = $this->get_customer_info($order);
       $customer_info_json = (empty($customer_info))?'':json_encode($customer_info);
+
+      $cart_info = $this->get_cart_info($order);
+      $cart_info_json = (empty($cart_info))?'':json_encode($cart_info);
       
       $debug_info = array(
         'apikey' => $this->merchant->get_key(),
@@ -439,6 +442,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         'callback_url' => $this->api->get_checkout_status_url(),
         'test' => $is_test_mode ? 'true' : 'false',
         'customParams' => $customer_info_json,
+        'cartParams' => $cart_info_json,
         'md5check' => $md5check,
       );
       $debug_info_str = print_r($debug_info, true);
@@ -460,6 +464,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url()); ?>">
         <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
         <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+        <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
       </form>      
 
@@ -620,6 +625,95 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       $info['city']       = $order->get_billing_city();      
       $info['postalCode']   = $order->get_billing_postcode();
       $info['country']    = $order->get_billing_country();
+
+      return $info;
+    }
+
+    /**
+     * Get information about the cart contents for the active order
+     * 
+     * @param WC_Order $order
+     * 
+     * @return array
+     */ 
+    public function get_cart_info($order) {                           
+      // sanity check
+      if (empty($order)) return null;
+
+      $info = [               
+        'subtotal'=> $order->get_subtotal(),        
+        'tax' => $order->get_total_tax(),
+        'shipping'=>$order->get_shipping_total(),      
+        'discount'=>$order->get_total_discount(),
+        'total'=>$order->get_total(),
+        'currency'=>$order->get_currency(),
+        'quantity'=> $order->get_item_count()
+      ];
+
+      if ($order->get_coupon_codes()) {
+        $info['coupon'] = 1;
+      }
+
+      $info['products'] = [];
+      // Get and Loop Over Order Items
+      foreach ( $order->get_items() as $item_id => $item ) {        
+        $product = wc_get_product( $item->get_product_id() );
+
+        $product_entry = [
+          'name' => $item->get_name(),
+          'quantity' => $item->get_quantity(), 
+          'subtotal' => $item->get_subtotal(),
+          'tax' => $item->get_subtotal_tax()                   
+        ];
+
+        if (!empty($tax)) {
+          $product_entry['tax_class'] = $item->get_tax_class();
+          //$product_entry['subtotal'] = $item->get_subtotal();
+        }
+
+        $categories = $product->get_categories(); 
+        if (!empty($categories)) {
+          if (is_array($categories)) {
+            $product_entry['categories'] = implode(';', $categories);
+          } else {
+            $product_entry['categories'] = $categories;
+          }
+          $product_entry['categories'] = strip_tags($product_entry['categories']);
+        }
+
+        /*
+        $description = $product->get_description();
+        $short_description = $product->get_short_description();
+        if (!empty($short_description)) {
+          $product_entry['description'] = $short_description;
+        } else if (!empty($description)) {
+          $product_entry['description'] = $description;
+        } 
+        */       
+
+        $meta = $item->get_meta_data();
+        if (!empty($meta)) {
+          if (is_array($meta)) {
+            foreach ($meta as $entry) {
+              $meta_data = $entry->get_data();
+              if (!isset($product_entry['meta'])) $product_entry['meta'] = '';
+              $product_entry['meta'] .= $meta_data['key'].':'.$meta_data['value'];
+            }
+          }
+        }
+
+        if ($product->has_weight()) {
+          $product_entry['weight'] = $product->get_weight();
+        }
+        if ($product->get_downloadable()) {
+          $product_entry['virtual'] = 1;
+        }
+        if ($product->get_featured()) {
+          $product_entry['featured'] = 1;
+        }
+
+        $info['products'][] = $product_entry;
+      }		  
 
       return $info;
     }

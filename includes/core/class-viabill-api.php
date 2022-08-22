@@ -291,6 +291,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         "callback_url" => "",
         "test" => "",
         "customParams" => "",
+        "cartParams" => "",
         "md5check" => ""
       ];			
 
@@ -305,6 +306,13 @@ if ( ! class_exists( 'Viabill_API' ) ) {
               $cpv = $dcpv[$cpk];
             }
             $value = $customParams;
+          }          
+        } elseif ($key == 'cartParams') {
+          $cartParams = str_replace('\"', '"', sanitize_text_field($_POST[$key]));
+          if (!empty($cartParams)) {
+            $value = $cartParams;
+          }	else {
+            unset($formData[$key]);
           }          
         } else {
           $value = sanitize_text_field($_POST[$key]);
