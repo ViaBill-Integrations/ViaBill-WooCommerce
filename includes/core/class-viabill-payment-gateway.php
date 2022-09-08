@@ -640,124 +640,138 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       // sanity check
       if (empty($order)) return null;
 
-      $order_data = $order->get_data(); // The Order data
+      try {
 
-      $shipping_same_as_billing = 'yes';
-      $billing_fields = [
-        'address' => trim($order_data['billing']['address_1'].' '.$order_data['billing']['address_2']),
-        'city' => trim($order_data['billing']['city']),
-        'state' => trim($order_data['billing']['state']),
-        'postcode' => trim($order_data['billing']['postcode']),
-        'country' => $order_data['billing']['country']        
-      ];
-      $shipping_fields = [
-        'address' => trim($order_data['shipping']['address_1'].' '.$order_data['shipping']['address_2']),
-        'city' => trim($order_data['shipping']['city']),
-        'state' => trim($order_data['shipping']['state']),
-        'postcode' => trim($order_data['shipping']['postcode']),
-        'country' => trim($order_data['shipping']['country'])          
-      ];
-      foreach ($billing_fields as $billing_field => $billing_value ) {
-        $shipping_value = $shipping_fields[$billing_field];
-        if (!empty($shipping_value) && !empty($billing_value)) {
-          if ($shipping_value != $billing_value) {
-            $shipping_same_as_billing = 'no';
-          }
-        }
-      }
+        $order_data = $order->get_data(); // The Order data
 
-      $info = [
-        'date_created' => $order_data['date_created']->date('Y-m-d H:i:s'),
-        'subtotal'=> $order->get_subtotal(),        
-        'tax' => $order->get_total_tax(),
-        'shipping'=>$order->get_shipping_total(),      
-        'discount'=>$order->get_total_discount(),
-        'total'=>$order->get_total(),
-        'currency'=>$order->get_currency(),
-        'quantity'=> $order->get_item_count(),
-        'billing_email' => trim($order_data['billing']['email']),
-        'billing_phone' => trim($order_data['billing']['phone']), 
-        'shipping_city' => trim($order_data['shipping']['city']),
-        'shipping_postcode' => trim($order_data['shipping']['postcode']),
-        'shipping_country' => trim($order_data['shipping']['country']),
-        'shipping_same_as_billing' => $shipping_same_as_billing
-      ];
-
-      if ($order->get_coupon_codes()) {
-        $info['coupon'] = 1;
-      }
-
-      $info['products'] = [];
-      // Get and Loop Over Order Items
-      foreach ( $order->get_items() as $item_id => $item ) {        
-        $product_id = $item->get_product_id();
-        $product = wc_get_product( $product_id );
-
-        $product_entry = [
-          'id' => $product_id,
-          'name' => $item->get_name(),
-          'quantity' => $item->get_quantity(), 
-          'subtotal' => $item->get_subtotal(),
-          'tax' => $item->get_subtotal_tax()                   
-        ];        
-
-        if (!empty($tax)) {
-          $product_entry['tax_class'] = $item->get_tax_class();          
-        }
-
-        $categories = $product->get_categories(); 
-        if (!empty($categories)) {
-          if (is_array($categories)) {
-            $product_entry['categories'] = implode(';', $categories);
-          } else {
-            $product_entry['categories'] = $categories;
-          }
-          $product_entry['categories'] = strip_tags($product_entry['categories']);
-        }         
-        
-        $product_entry['product_url'] = get_permalink( $product_entry['id'] );
-
-        $image_ref = get_post_thumbnail_id( $product_id );
-        if (!empty( $image_ref )) {
-           $image = wp_get_attachment_image_src( $image_ref, 'single-post-thumbnail' );
-           if (!empty($image)) {
-            $product_entry['image_url'] = $image[0];
-           }
-        }
-
-        $meta = $item->get_meta_data();
-        if (!empty($meta)) {
-          if (is_array($meta)) {
-            foreach ($meta as $entry) {
-              $meta_data = $entry->get_data();
-              if (!isset($product_entry['meta'])) $product_entry['meta'] = '';
-              $product_entry['meta'] .= $meta_data['key'].':'.$meta_data['value'];
+        $shipping_same_as_billing = 'yes';
+        $billing_fields = [
+          'address' => trim($order_data['billing']['address_1'].' '.$order_data['billing']['address_2']),
+          'city' => trim($order_data['billing']['city']),
+          'state' => trim($order_data['billing']['state']),
+          'postcode' => trim($order_data['billing']['postcode']),
+          'country' => $order_data['billing']['country']        
+        ];
+        $shipping_fields = [
+          'address' => trim($order_data['shipping']['address_1'].' '.$order_data['shipping']['address_2']),
+          'city' => trim($order_data['shipping']['city']),
+          'state' => trim($order_data['shipping']['state']),
+          'postcode' => trim($order_data['shipping']['postcode']),
+          'country' => trim($order_data['shipping']['country'])          
+        ];
+        foreach ($billing_fields as $billing_field => $billing_value ) {
+          $shipping_value = $shipping_fields[$billing_field];
+          if (!empty($shipping_value) && !empty($billing_value)) {
+            if ($shipping_value != $billing_value) {
+              $shipping_same_as_billing = 'no';
             }
           }
         }
 
-        if ($product->has_weight()) {
-          $product_entry['weight'] = $product->get_weight();
-        }
-        if ($product->get_downloadable()) {
-          $product_entry['virtual'] = 1;
-        }
-        if ($product->get_featured()) {
-          $product_entry['featured'] = 1;
+        $info = [
+          'date_created' => $order_data['date_created']->date('Y-m-d H:i:s'),
+          'subtotal'=> $order->get_subtotal(),        
+          'tax' => $order->get_total_tax(),
+          'shipping'=>$order->get_shipping_total(),      
+          'discount'=>$order->get_total_discount(),
+          'total'=>$order->get_total(),
+          'currency'=>$order->get_currency(),
+          'quantity'=> $order->get_item_count(),
+          'billing_email' => trim($order_data['billing']['email']),
+          'billing_phone' => trim($order_data['billing']['phone']), 
+          'shipping_city' => trim($order_data['shipping']['city']),
+          'shipping_postcode' => trim($order_data['shipping']['postcode']),
+          'shipping_country' => trim($order_data['shipping']['country']),
+          'shipping_same_as_billing' => $shipping_same_as_billing
+        ];
+
+        if ($order->get_coupon_codes()) {
+          $info['coupon'] = 1;
         }
 
-        /*
-        $description = $product->get_description();
-        $short_description = $product->get_short_description();
-        if (!empty($short_description)) {
-          $product_entry['description'] = $this->truncateDescription($short_description);
-        } else if (!empty($description)) {
-          $product_entry['description'] = $this->truncateDescription($description);
-        }
-        */
+        $info['products'] = [];
+        // Get and Loop Over Order Items
+        foreach ( $order->get_items() as $item_id => $item ) {        
+          $product_id = $item->get_product_id();
+          $product = wc_get_product( $product_id );
+          $product_quantity = $item->get_quantity();     
 
-        $info['products'][] = $product_entry;
-      }		  
+          $product_entry = [
+            'id' => $product_id,
+            'name' => $item->get_name(),
+            'quantity' => $product_quantity, 
+            'subtotal' => $item->get_subtotal(),
+            'tax' => $item->get_subtotal_tax()                   
+          ];        
+
+          if (!empty($tax)) {
+            $product_entry['tax_class'] = $item->get_tax_class();          
+          }
+
+          $product_initial_price = (float) $product->get_regular_price();
+          $product_sales_price = (float) $product->get_sale_price();
+          $product_discount_price = ($product_initial_price - $product_sales_price);
+          if ($product_discount_price > 0.01) {
+            $product_entry['discount'] = number_format($product_discount_price * $product_quantity, 2);
+          }
+
+          $categories = $product->get_categories(); 
+          if (!empty($categories)) {
+            if (is_array($categories)) {
+              $product_entry['categories'] = implode(';', $categories);
+            } else {
+              $product_entry['categories'] = $categories;
+            }
+            $product_entry['categories'] = strip_tags($product_entry['categories']);
+          }         
+          
+          $product_entry['product_url'] = get_permalink( $product_entry['id'] );
+
+          $image_ref = get_post_thumbnail_id( $product_id );
+          if (!empty( $image_ref )) {
+            $image = wp_get_attachment_image_src( $image_ref, 'single-post-thumbnail' );
+            if (!empty($image)) {
+              $product_entry['image_url'] = $image[0];
+            }
+          }
+
+          $meta = $item->get_meta_data();
+          if (!empty($meta)) {
+            if (is_array($meta)) {
+              foreach ($meta as $entry) {
+                $meta_data = $entry->get_data();
+                if (!isset($product_entry['meta'])) $product_entry['meta'] = '';
+                $product_entry['meta'] .= $meta_data['key'].':'.$meta_data['value'];
+              }
+            }
+          }
+
+          if ($product->has_weight()) {
+            $product_entry['weight'] = $product->get_weight();
+          }
+          if ($product->get_downloadable()) {
+            $product_entry['virtual'] = 1;
+          }
+          if ($product->get_featured()) {
+            $product_entry['featured'] = 1;
+          }
+
+          /*
+          $description = $product->get_description();
+          $short_description = $product->get_short_description();
+          if (!empty($short_description)) {
+            $product_entry['description'] = $this->truncateDescription($short_description);
+          } else if (!empty($description)) {
+            $product_entry['description'] = $this->truncateDescription($description);
+          }
+          */
+
+          $info['products'][] = $product_entry;
+        }
+      
+      } catch ( Exception $e ) {
+         return null;
+      }
 
       return $info;
     }
