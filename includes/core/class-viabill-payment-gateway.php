@@ -615,7 +615,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       if (empty($order)) return $info;           
       
       $info['email']  = $order->get_billing_email();
-      $info['phoneNumber']  = $order->get_billing_phone();      
+      $info['phoneNumber']  = $this->sanitizePhone($order->get_billing_phone(),
+                                                 $order->get_billing_country());
       $info['firstName'] = $order->get_billing_first_name();
       $info['lastName']  = $order->get_billing_last_name();      
       $info['fullName'] = trim($info['firstName'].' '.$info['lastName']);
@@ -774,6 +775,54 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       }
 
       return $info;
+    }
+
+    public function sanitizePhone($phone, $country_code = null) {
+      if (empty($phone)) {
+          return $phone;
+      }
+      if (empty($country_code)) {
+          return $phone;
+      }
+      $clean_phone = str_replace(array('+','(',')','-',' '),'',$phone);
+      if (strlen($clean_phone)<3) {
+          return $phone;
+      }
+      $country_code = strtoupper($country_code);
+      switch ($country_code) {
+          case 'US':
+          case 'USA': // +1
+              $prefix = substr($clean_phone, 0, 1);
+              if ($prefix == '1') {
+                  $phone_number = substr($clean_phone, 1);
+                  if (strlen($phone_number)==10) {
+                      $phone = $phone_number;
+                  }
+              }                
+              break;
+          case 'DK': 
+          case 'DNK': // +45
+              $prefix = substr($clean_phone, 0, 2);
+              if ($prefix == '45') {
+                  $phone_number = substr($clean_phone, 2);
+                  if (strlen($phone_number)==8) {
+                      $phone = $phone_number;
+                  }
+              }
+              break;
+          case 'ES': 
+          case 'ESP': // +34
+              $prefix = substr($clean_phone, 0, 2);
+              if ($prefix == '34') {
+                  $phone_number = substr($clean_phone, 2);
+                  if (strlen($phone_number)==9) {
+                      $phone = $phone_number;
+                  }
+              }
+              break;        
+      }
+
+      return $phone;
     }
 
     public function truncateDescription($text, $maxchar=200, $end='...') {
