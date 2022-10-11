@@ -108,7 +108,7 @@ return array(
     'type'        => 'select',
     'class'       => 'wc-enhanced-select',
     'description' => __( 'Select this option in order to capture the whole order amount by manually switching the order status from, "On Hold" to "Processing".', 'viabill' ),
-    'default'     => 'no',
+    'default'     => 'yes',
     'options'     => array(
       'no'  => __( 'No', 'viabill' ),
       'yes' => __( 'Yes', 'viabill' ),

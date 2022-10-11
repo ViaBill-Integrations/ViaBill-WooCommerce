@@ -3,6 +3,11 @@ if ( ! defined( 'ABSPATH' ) ) {
   exit;
 }
 
+if (! defined ('VIABILL_TRY_PAYMENT_METHOD_ID')) {
+  define('VIABILL_TRY_PAYMENT_METHOD_ID', 'viabill_try');
+  define('VIABILL_MONTHLY_PAYMENT_METHOD_ID', 'viabill_official');
+}
+
 if ( ! class_exists( 'Viabill_API' ) ) {
   /**
    * Viabill_API class
@@ -64,9 +69,11 @@ if ( ! class_exists( 'Viabill_API' ) ) {
     /**
      * Initialize all the needed hook methods.
      */
-    public function register() {
-      add_action( 'woocommerce_api_' . VIABILL_PLUGIN_ID, array( $this, 'do_checkout_status' ) );
-      add_action( 'woocommerce_api_' . VIABILL_PLUGIN_ID . '_checkout_authorize', array( $this, 'do_checkout_authorize' ) );
+    public function register() {      
+      add_action( 'woocommerce_api_' . VIABILL_MONTHLY_PAYMENT_METHOD_ID, array( $this, 'do_checkout_status' ) );
+      add_action( 'woocommerce_api_' . VIABILL_MONTHLY_PAYMENT_METHOD_ID . '_checkout_authorize', array( $this, 'do_checkout_authorize' ) );
+      add_action( 'woocommerce_api_' . VIABILL_TRY_PAYMENT_METHOD_ID, array( $this, 'do_checkout_status' ) );
+      add_action( 'woocommerce_api_' . VIABILL_TRY_PAYMENT_METHOD_ID . '_checkout_authorize', array( $this, 'do_checkout_authorize' ) );
     }
 
     /**
@@ -74,8 +81,13 @@ if ( ! class_exists( 'Viabill_API' ) ) {
      *
      * @return string
      */
-    public function get_checkout_status_url() {
-      return WC()->api_request_url( VIABILL_PLUGIN_ID );
+    public function get_checkout_status_url($payment_method_id = null) {
+      if (empty($payment_method_id)) $payment_method_id = VIABILL_MONTHLY_PAYMENT_METHOD_ID;
+      $url = WC()->api_request_url( $payment_method_id );
+      if ($payment_method_id == VIABILL_TRY_PAYMENT_METHOD_ID) {
+         $url = $url; // &trybeforeyoubuy=1';
+      }
+      return $url;
     }
 
     /**
@@ -198,7 +210,8 @@ if ( ! class_exists( 'Viabill_API' ) ) {
 
       // Check if order has been payed with ViaBill.
       $payment_method = $order->get_payment_method();
-      if ( 'viabill_official' !== $payment_method ) {         
+      if (( VIABILL_MONTHLY_PAYMENT_METHOD_ID !== $payment_method ) && 
+        ( VIABILL_TRY_PAYMENT_METHOD_ID !== $payment_method )) {         
         $this->logger->log( 'Order ' . $order_id . ' payment method ['.$payment_method.'] is not ViaBill.', 'error' );
         $this->respond(
           array(
@@ -292,10 +305,12 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         "test" => "",
         "customParams" => "",
         "cartParams" => "",
-        "md5check" => ""
+        "md5check" => "",
+        "tbyb" => "",
       ];			
 
-      foreach ($formData as $key => &$value) {			
+      foreach ($formData as $key => &$value) {	
+        if (!isset($_POST[$key]))	continue;
         if ($key == 'customParams') {
           $customParams = str_replace('\"', '"', sanitize_text_field($_POST[$key]));
           // double json decode 
@@ -314,6 +329,22 @@ if ( ! class_exists( 'Viabill_API' ) ) {
           }	else {
             unset($formData[$key]);
           }          
+        } elseif ($key == 'tbyb') {
+          $tbybValue = null;
+          if (isset($_POST[$key])) {
+            $tbybValue = intval(sanitize_text_field($_POST[$key]));
+            switch ($tbybValue) {
+              case 1:
+              case 0:
+                $value = $tbybValue;
+                break;
+            }
+          }
+          if (isset($tbybValue)) {
+            $value = $tbybValue;
+          } else {
+            unset($formData[$key]);
+          }
         } else {
           $value = sanitize_text_field($_POST[$key]);
         }
@@ -389,10 +420,10 @@ if ( ! class_exists( 'Viabill_API' ) ) {
      *
      * @return string
      */
-    public function get_checkout_authorize_url() {
-      return WC()->api_request_url( VIABILL_PLUGIN_ID . '_checkout_authorize');
+    public function get_checkout_authorize_url($payment_method_id = null) {
+      if (empty($payment_method_id)) $payment_method_id = VIABILL_MONTHLY_PAYMENT_METHOD_ID;
+      return WC()->api_request_url( $payment_method_id . '_checkout_authorize');
     }
-
 
   }
 }
