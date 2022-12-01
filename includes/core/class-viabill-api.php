@@ -138,19 +138,22 @@ if ( ! class_exists( 'Viabill_API' ) ) {
     public function is_signature_match( $order, $params, $use_deprecated_id = false ) {
       $transaction_id = $this->connector->get_unique_transaction_id( $order, $use_deprecated_id );
       $order_number   = $this->connector->get_order_number( $order, $use_deprecated_id );
+      $order_amount   = $order->get_total();
 
-      $signature_p1 = $transaction_id . '#' . $order_number . '#' . $order->get_total() . '#' . $order->get_currency();
+      $signature_p1 = $transaction_id . '#' . $order_number . '#' . number_format($order_amount, 2, '.', '') . '#' . $order->get_currency();
       $signature_p2 = $params['status'] . '#' . $params['time'] . '#' . get_option( 'viabill_secret', '' );
 
       $local_signature = md5( $signature_p1 . '#' . $signature_p2 );
       $is_match        = $local_signature === $params['signature'];
 
       if ( ! $is_match && ! $use_deprecated_id ) {
+        $signature_mismatch_info = "Mismatch info: Local signature with deprecated disabled is [".$signature_p1. ']#[' . $signature_p2.'] remote signature is '.$params['signature'];
+        $this->logger->log( $signature_mismatch_info, 'error' );
         return $this->is_signature_match( $order, $params, true );
       }
 
       if (! $is_match ) {
-        $signature_mismatch_info = "Mismatch info: Local signature is ".$signature_p1. '#' . $signature_p2.' remote signature is '.$params['signature'];
+        $signature_mismatch_info = "Mismatch info: Local signature with deprecated enabled is ".$signature_p1. '#' . $signature_p2.' remote signature is '.$params['signature'];
         $this->logger->log( $signature_mismatch_info, 'error' );
       }
 

@@ -357,9 +357,24 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
             <tr valign="top">
               <th scope="row" class="titledesc"></th>
               <td class="forminp">
-                <?php $forgot_pass_url = 'https://viabill.com/auth/forgot/'; ?>
-                <?php $lang = strtoupper( get_locale() ); ?>
-                <?php $forgot_pass_url .= ! empty( $lang ) ? '?lang=' . $lang : ''; ?>
+                <?php
+                $lang_iso2 = 'en';
+                $lang = get_locale();
+                if (strlen($lang)>2) {
+                  $upos = strpos($lang, '_');
+                  if ($upos>0) {
+                    $lang_code = strtolower(substr($lang, 0, $upos));
+                    switch ($lang_code) {
+                      case 'da':
+                      case 'es':
+                      case 'en':
+                      $lang_iso2 = $lang_code;
+                      break;
+                    }
+                  }
+                }
+                $forgot_pass_url = 'https://my.viabill.com/merchant/'.$lang_iso2.'/#/auth/forgot';
+                ?>                
                 <a href="<?php echo esc_url($forgot_pass_url); ?>" target="_blank"><?php esc_html_e( 'Forgot password?', 'viabill' ); ?></a>
               </td>
             </tr>

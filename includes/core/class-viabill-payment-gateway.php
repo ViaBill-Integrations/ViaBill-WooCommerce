@@ -12,7 +12,7 @@ if (! defined ('VIABILL_TRY_PAYMENT_METHOD_ID')) {
   define('VIABILL_MONTHLY_PAYMENT_METHOD_ID', 'viabill_official'); // same as: VIABILL_PLUGIN_ID
   
   // Hide "try before you buy" payment option in backend settings  
-  define('TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION', false);
+  define('TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION', true);
 }
 
 function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
@@ -467,8 +467,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         $order->save();
       }
 
-      $transaction = $this->connector->get_unique_transaction_id( $order );
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order->get_total() . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
+      $transaction = $this->connector->get_unique_transaction_id( $order );      
+      $order_amount = number_format($order->get_total(), 2, '.', '');
+      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -489,7 +490,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         'apikey' => $this->merchant->get_key(),
         'transaction' => $transaction,
         'order_number' => $order->get_id(),
-        'amount' => $order->get_total(),
+        'amount' => $order_amount,
         'currency' => $order->get_currency(),
         'success_url' => $order->get_checkout_order_received_url(),
         'cancel_url' => $order->get_cancel_order_url_raw(),        
@@ -511,7 +512,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
         <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
         <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
-        <input type="hidden" name="amount" value="<?php echo esc_attr($order->get_total()); ?>">
+        <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
         <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
         <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
         <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
@@ -699,6 +700,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       try {
 
         $order_data = $order->get_data(); // The Order data
+        $order_amount = number_format($order->get_total(), 2, '.', '');
 
         $shipping_same_as_billing = 'yes';
         $billing_fields = [
@@ -730,7 +732,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           'tax' => $order->get_total_tax(),
           'shipping'=>$order->get_shipping_total(),      
           'discount'=>$order->get_total_discount(),
-          'total'=>$order->get_total(),
+          'total'=>$order_amount,
           'currency'=>$order->get_currency(),
           'quantity'=> $order->get_item_count(),
           'billing_email' => trim($order_data['billing']['email']),
@@ -1204,7 +1206,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       }
 
       $transaction = $this->connector->get_unique_transaction_id( $order );
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order->get_total() . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
+      $order_amount = number_format($order->get_total(), 2, '.', '');      
+      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -1225,7 +1228,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         'apikey' => $this->merchant->get_key(),
         'transaction' => $transaction,
         'order_number' => $order->get_id(),
-        'amount' => $order->get_total(),
+        'amount' => $order_amount,
         'currency' => $order->get_currency(),
         'success_url' => $order->get_checkout_order_received_url(),
         'cancel_url' => $order->get_cancel_order_url_raw(),
@@ -1247,7 +1250,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
         <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
         <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
-        <input type="hidden" name="amount" value="<?php echo esc_attr($order->get_total()); ?>">
+        <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
         <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
         <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
         <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
@@ -1390,8 +1393,9 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       // sanity check
       if (empty($order)) return $info;           
       
-      $info['email']  = $order->get_billing_email();
-      $info['phoneNumber']  = $order->get_billing_phone();      
+      $info['email']  = $order->get_billing_email();      
+      $info['phoneNumber']  = $this->sanitizePhone($order->get_billing_phone(),
+                                                 $order->get_billing_country());   
       $info['firstName'] = $order->get_billing_first_name();
       $info['lastName']  = $order->get_billing_last_name();      
       $info['fullName'] = trim($info['firstName'].' '.$info['lastName']);
@@ -1419,6 +1423,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       try {
 
         $order_data = $order->get_data(); // The Order data
+        $order_amount = number_format($order->get_total(), 2, '.', '');
 
         $shipping_same_as_billing = 'yes';
         $billing_fields = [
@@ -1450,7 +1455,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           'tax' => $order->get_total_tax(),
           'shipping'=>$order->get_shipping_total(),      
           'discount'=>$order->get_total_discount(),
-          'total'=>$order->get_total(),
+          'total'=>$order_amount,
           'currency'=>$order->get_currency(),
           'quantity'=> $order->get_item_count(),
           'billing_email' => trim($order_data['billing']['email']),
@@ -1558,6 +1563,54 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
          return 1;
       }
       return 0;
+    }
+
+    public function sanitizePhone($phone, $country_code = null) {
+      if (empty($phone)) {
+          return $phone;
+      }
+      if (empty($country_code)) {
+          return $phone;
+      }
+      $clean_phone = str_replace(array('+','(',')','-',' '),'',$phone);
+      if (strlen($clean_phone)<3) {
+          return $phone;
+      }
+      $country_code = strtoupper($country_code);
+      switch ($country_code) {
+          case 'US':
+          case 'USA': // +1
+              $prefix = substr($clean_phone, 0, 1);
+              if ($prefix == '1') {
+                  $phone_number = substr($clean_phone, 1);
+                  if (strlen($phone_number)==10) {
+                      $phone = $phone_number;
+                  }
+              }                
+              break;
+          case 'DK': 
+          case 'DNK': // +45
+              $prefix = substr($clean_phone, 0, 2);
+              if ($prefix == '45') {
+                  $phone_number = substr($clean_phone, 2);
+                  if (strlen($phone_number)==8) {
+                      $phone = $phone_number;
+                  }
+              }
+              break;
+          case 'ES': 
+          case 'ESP': // +34
+              $prefix = substr($clean_phone, 0, 2);
+              if ($prefix == '34') {
+                  $phone_number = substr($clean_phone, 2);
+                  if (strlen($phone_number)==9) {
+                      $phone = $phone_number;
+                  }
+              }
+              break;        
+      }
+
+      return $phone;
     }
 
   }
