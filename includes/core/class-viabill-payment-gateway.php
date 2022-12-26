@@ -422,7 +422,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         }
       }
 
-      do_action( 'viabill_pricetag_after_payment_description' );
+      // do_action( 'viabill_pricetag_after_payment_description' );
+      do_action( 'viabill_pricetag_after_monthly_payment_description' );
     }
 
     /**
@@ -1160,7 +1161,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         }
       }	  
 
-      do_action( 'viabill_pricetag_after_payment_description' );
+      // do_action( 'viabill_pricetag_after_payment_description' );
+      do_action( 'viabill_pricetag_after_tbyb_payment_description' );
     }
 
     /**

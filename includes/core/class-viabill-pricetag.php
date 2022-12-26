@@ -114,10 +114,12 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         add_action( 'woocommerce_proceed_to_checkout', array( 'Viabill_Pricetag', 'show_on_cart' ) );
       }
       if ( ( ! isset( $this->settings['pricetag-on-checkout'] ) && $payment_gateway_enabled ) || 'yes' === $this->settings['pricetag-on-checkout'] ) {
-        add_action( 'viabill_pricetag_on_checkout', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
+        // add_action( 'viabill_pricetag_on_checkout', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
         // Check if payment gateway enabled since PriceTag is displayed in the payment method description.
         if ( ! Viabill_Main::is_payment_gateway_disabled() ) {
-          add_action( 'viabill_pricetag_after_payment_description', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
+          // add_action( 'viabill_pricetag_after_payment_description', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
+          add_action( 'viabill_pricetag_after_monthly_payment_description', array( 'Viabill_Pricetag', 'show_on_monthly_checkout' ) );
+          add_action( 'viabill_pricetag_after_tbyb_payment_description', array( 'Viabill_Pricetag', 'show_on_tbyb_checkout' ) );
         } else {
           add_action( 'woocommerce_review_order_before_submit', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
         }
@@ -273,12 +275,32 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      *
      * @return void
      */
-    public static function show_on_checkout() {
+    public static function show_on_checkout($payment_method = 'monthly') {
       $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
 
       $totals = WC()->cart->get_totals();
       $total  = isset( $totals['total'] ) ? $totals['total'] : 0;
-      self::show( 'payment', 'checkout', $total, $settings );
+      self::show( 'payment', 'checkout', $total, $settings, $payment_method);
+    }
+
+    /**
+     * Display pricetag on the checkout page for the monthly payments.
+     *
+     * @return void
+     */
+    public static function show_on_monthly_checkout() {
+      $payment_method = 'monthly';
+      self::show_on_checkout($payment_method);      
+    }
+
+    /**
+     * Display pricetag on the checkout page for the "Try Before you Buy" method.
+     *
+     * @return void
+     */
+    public static function show_on_tbyb_checkout() {
+      $payment_method = 'tbyb';
+      self::show_on_checkout($payment_method);      
     }
 
     /**
@@ -290,7 +312,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      * @param  array            $settings
      * @return void
      */
-    public static function show( $view, $target, $price, $settings ) {
+    public static function show( $view, $target, $price, $settings, $payment_method = null ) {
       $dynamic_price         = 'pricetag-' . $target . '-dynamic-price';
       $dynamic_price_trigger = $dynamic_price . '-trigger';
       $position_field        = 'pricetag-position-' . $target;
@@ -311,6 +333,24 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       $currency = $combination['currency'];
       $country = $combination['country'];
 
+      // Do you want to differentiate between "monthly" and "try before you buy"?
+      $product_types_str = '';
+      switch ($target) {        
+        case 'product':
+          break;
+        case 'cart':
+          break;
+        case 'checkout':
+          if ($payment_method == 'tbyb') {
+            $product_types = ['tbyb'];
+          } else {
+            $product_types = ['light','liberty','plus'];
+          }
+          $product_types_str = 'data-checkout-product-types=\''.json_encode($product_types).'\'';
+
+          break;
+      }        
+
       $attrs = array_filter(
         array(
           'view'                   => $view,
@@ -319,13 +359,13 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
           'country-code'           => $country,
           'language'               => $language,
           'dynamic-price'          => isset( $settings[ $dynamic_price ] ) && ! empty( $settings[ $dynamic_price ] ) ? $settings[ $dynamic_price ] : '',
-          'dynamic-price-triggers' => isset( $settings[ $dynamic_price_trigger ] ) && ! empty( $settings[ $dynamic_price_trigger ] ) ? $settings[ $dynamic_price_trigger ] : '',
+          'dynamic-price-triggers' => isset( $settings[ $dynamic_price_trigger ] ) && ! empty( $settings[ $dynamic_price_trigger ] ) ? $settings[ $dynamic_price_trigger ] : '',          
         )
-      );
+      );      
 
       ?>
       <div class="viabill-pricetag-wrap" <?php echo $style ? 'style="' . esc_attr($style) . '"' : '' ?>>
-        <div        
+        <div <?php echo $product_types_str; ?> 
         <?php 
           foreach ($attrs as $attr_name => $attr_value) {
             echo 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
