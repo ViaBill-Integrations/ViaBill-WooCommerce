@@ -78,10 +78,28 @@ add_filter( 'viabill_try_gateway_checkout_icon', 'get_try_gateway_icon', 10, 3 )
  * @param array $methods
  * @return array
  */
-function viabill_add_gateway( $methods ) {
-  $show_try_payment_method = false;
-  if (defined('TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION')) {
+function viabill_add_gateway( $methods ) {  
+  if (defined('TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION')) {    
     $include_try_payment_method = TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION;    
+    if ($include_try_payment_method) {
+      // check if the option is available in the specific country
+      $country = wc_get_base_location()['country'];
+      if (empty($country)) {
+        $shop_location = get_option( 'woocommerce_default_country' ); 
+        $shop_location = explode(':', $shop_location);
+        $country  = reset($shop_location); 
+      }
+      if (!empty($country)) {
+        $country = strtoupper($country);
+        switch ($country) {
+          case 'ES':
+          case 'SP':
+          case 'SPAIN':
+            $include_try_payment_method = false;
+            break;
+        }
+      }
+    }
   }
   
   $methods[] = 'Viabill_Payment_Gateway';  
