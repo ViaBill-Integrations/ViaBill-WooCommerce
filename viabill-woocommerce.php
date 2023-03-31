@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.33
+ * Version: 1.1.34
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -99,7 +99,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 5 );
       add_action( 'admin_init', array( $this, 'check_for_other_viabill_gateways' ), 1 );
       add_action( 'admin_init', array( $this, 'viabill_migrate_older_version' ), 5 );
-      add_action( 'activated_plugin', array( $this, 'check_backward_compatibility' ) );
+      // add_action( 'activated_plugin', array( $this, 'check_backward_compatibility' ) );
       add_action( 'woocommerce_admin_field_payment_gateways', array( $this, 'check_for_other_viabill_gateways' ) );
 
       new Viabill_Registration( true );
@@ -205,7 +205,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.33' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.34' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -672,7 +672,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * 
      * @since 1.1.11
      */
-    private function check_backward_compatibility() {
+    public function check_backward_compatibility() {
        
     }
 
