@@ -81,6 +81,21 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     }
 
     /**
+     * Returns true, if it's a Viabill payment method (pay in 30 days or monthly payments)
+     * 
+     * @param string $payment_method_name
+     * @return bool
+     */
+    public function is_viabill_payment($payment_method_name) {
+      if (($payment_method_name == 'viabill_official')||
+           ($payment_method_name == 'viabill_try')) {
+              return true;
+      }
+
+      return false;    
+    }
+
+    /**
      * Format amount.
      *
      * @param  float $amount
@@ -264,7 +279,8 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @return array                       [ 'success' => bool, 'message' => string ]
      */
     public function capture( $order, $amount_to_capture = 0, $use_deprecated_id = false ) {
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+
+      if (!$this->is_viabill_payment($order->get_payment_method())) {
         $this->logger->log( 'Request to capture order ' . $order->get_id() . ' failed, wrong payment method', 'notice' );
         return array(
           'success' => false,
@@ -380,7 +396,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @return array                    [ 'success' => bool, 'message' => string ]
      */
     public function refund( $order, $amount, $currency, $use_deprecated_id = false ) {
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+      if (!$this->is_viabill_payment($order->get_payment_method())) {
         return;
       }
 
@@ -438,7 +454,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @return array
      */
     public function cancel( $order, $use_deprecated_id = false ) {
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+      if (!$this->is_viabill_payment($order->get_payment_method())) {
         $this->logger->log( 'Request to cancel order ' . $order->get_id() . ' failed, wrong payment method', 'notice' );
         return array(
           'success' => false,

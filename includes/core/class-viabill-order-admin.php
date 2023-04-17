@@ -76,6 +76,21 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
     }
 
     /**
+     * Returns true, if it's a Viabill payment method (pay in 30 days or monthly payments)
+     * 
+     * @param string $payment_method_name
+     * @return bool
+     */
+    public function is_viabill_payment($payment_method_name) {
+      if (($payment_method_name == 'viabill_official')||
+           ($payment_method_name == 'viabill_try')) {
+              return true;
+      }
+
+      return false;    
+    }
+
+    /**
      * Return false if payment method is ViaBill or $is_editable otherwise.
      *
      * @param  bool     $is_editable
@@ -83,7 +98,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @return bool
      */
     public function is_order_editable( $is_editable, $order ) {
-      if ( 'viabill_official' === $order->get_payment_method() ) {
+      if ( $this->is_viabill_payment($order->get_payment_method()) ) {      
         return in_array( $order->get_status(), array( 'pending', 'on-hold', 'processing', 'auto-draft' ), true );
       }
 
@@ -101,7 +116,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @return void
      */
     public function maybe_cancel( $order_id, $from, $to, $order ) {
-      if ( 'viabill_official' !== $order->get_payment_method() || 'cancelled' !== $to ) {
+      if ( (!$this->is_viabill_payment($order->get_payment_method())) || ('cancelled' !== $to) ) {
         return;
       }
 
@@ -138,7 +153,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @return void
      */
     public function maybe_capture( $order_id, $from, $to, $order ) {
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+      if ( ! $this->is_viabill_payment($order->get_payment_method()) ) {
         return;
       }
 
@@ -169,7 +184,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
     public function maybe_refund( $order_id, $from = null, $to = null, $order = null ) {
       $order = $order ? $order : wc_get_order( $order_id );
 
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+      if ( !$this->is_viabill_payment($order->get_payment_method()) ) {
         return;
       }
 
@@ -243,7 +258,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @param WC_Order $order
      */
     public function display_viabill_order_status( $order ) {
-      if ( 'viabill_official' !== $order->get_payment_method() ) {
+      if ( !$this->is_viabill_payment($order->get_payment_method()) ) {
         return;
       }
 
@@ -321,7 +336,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @param WC_Order $order
      */
     public function display_capture_button( $order ) {
-      if ( 'viabill_official' !== $order->get_payment_method() && 'refunded' !== $order->get_status() ) {
+      if ( (!$this->is_viabill_payment($order->get_payment_method())) || ('refunded' === $order->get_status()) ) {
         return;
       }
 
@@ -353,7 +368,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @return void
      */
     public function display_cancel_order_button( $order ) {
-      if ( 'viabill_official' !== $order->get_payment_method() || 'approved' !== $order->get_meta( 'viabill_status', true ) ) {
+      if ( (!$this->is_viabill_payment($order->get_payment_method())) || ('approved' !== $order->get_meta( 'viabill_status', true )) ) {
         return;
       }
 

@@ -295,8 +295,9 @@ jQuery(document).ready(function( $ ) {
 
   function viaBillDisplayStatusSwitchWarning() {
     // display confirm alert if trying to edit order which has not received ViaBill response
-    $('.save_order').on('click', function(e){
-      var isViabil        = 'viabill_official' === $('#_payment_method').val(),
+    $('.save_order').on('click', function(e) {
+        let isViabil = (('viabill_official' === $('#_payment_method').val())||
+                        ('viabill_try' === $('#_payment_method').val())),
           pendingApproval = 'pending_approval' === $('#viabill-status').data('status');
 
       if (isViabil && pendingApproval) {
@@ -312,8 +313,9 @@ jQuery(document).ready(function( $ ) {
 
   function viaBillDisplayRefundWarning() {
     // display confirm alert if changing order status to refunded
-    $('.save_order').on('click', function(e){
-      let isViabil      = 'viabill_official' === $('#_payment_method').val(),
+    $('.save_order').on('click', function(e){      
+      let isViabil = (('viabill_official' === $('#_payment_method').val())||
+                      ('viabill_try' === $('#_payment_method').val())),
           refundStatus  = 'wc-refunded' === $('#order_status').val(),
           viabillStatus = $('#viabill-status').data('status');
 
@@ -335,8 +337,9 @@ jQuery(document).ready(function( $ ) {
 
   function viaBillDisplayDepricatedStatusWarning() {
     // display confirm alert if changing order status to refunded
-    $('.save_order').on('click', function(e){
-      let isViabil = 'viabill_official' === $('#_payment_method').val(),
+    $('.save_order').on('click', function(e){      
+      let isViabil = (('viabill_official' === $('#_payment_method').val())||
+                      ('viabill_try' === $('#_payment_method').val())),
           status   = $('#order_status').val();
 
       if (isViabil && status.includes('wc-viabill')) {
@@ -349,7 +352,8 @@ jQuery(document).ready(function( $ ) {
   function viaBillDisplayCaptureOnStatusWarning() {
     // display confirm alert if changing order status to processing
     $('.save_order').on('click', function(e){
-      let isViabil = 'viabill_official' === $('#_payment_method').val(),
+      let isViabil = (('viabill_official' === $('#_payment_method').val())||
+                      ('viabill_try' === $('#_payment_method').val())),
           status   = $('#order_status').val();
 
       if (isViabil && 'yes' === viabillAdminScript.status_capture && 'wc-processing' === status) {

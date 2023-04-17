@@ -124,6 +124,21 @@ if ( ! class_exists( 'Viabill_DB_Update' ) ) {
     }
 
     /**
+     * Returns true, if it's a Viabill payment method (pay in 30 days or monthly payments)
+     * 
+     * @param string $payment_method_name
+     * @return bool
+     */
+    public function is_viabill_payment($payment_method_name) {
+      if (($payment_method_name == 'viabill_official')||
+           ($payment_method_name == 'viabill_try')) {
+              return true;
+      }
+
+      return false;    
+    }
+
+    /**
      * Handle fetching batches and creating scheduled batch handling
      *
      * @param string $status Status which will be updated.
@@ -174,7 +189,7 @@ if ( ! class_exists( 'Viabill_DB_Update' ) ) {
         $order = wc_get_order( $row['ID'] );
 
         if ( 'wc-pending' === $status ) {
-          if ( 'viabill_official' === $order->get_payment_method() ) {
+          if ( $this->is_viabill_payment($order->get_payment_method()) ) {
             $old_status = $order->get_meta( 'viabill_status' );
 
             if ( ! $old_status ) {
