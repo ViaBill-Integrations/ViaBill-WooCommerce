@@ -220,9 +220,10 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @param  array  $additional_data Defaults to empty array.
      * @return array|false
      */
-    public function register( $email, $country, $additional_data = array() ) {
+    public function register( $email, $name, $country, $additional_data = array() ) {
       $request_body = array(
         'email'          => $email,
+        'name'           => $name, 
         'country'        => $country,
         'url'            => get_site_url(),
         'additionalInfo' => $additional_data,

@@ -125,13 +125,14 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
 
           $email = isset( $_POST['viabill-reg-email'] ) ? sanitize_email( wp_unslash( $_POST['viabill-reg-email'] ) ) : '';
 
+          $name = isset( $_POST['viabill-reg-contact-name'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-contact-name'] ) ) : '';
+
           $additional_data = array(
-            isset( $_POST['viabill-reg-shop-url'] ) ? esc_url_raw( wp_unslash( $_POST['viabill-reg-shop-url'] ) ) : '',
-            isset( $_POST['viabill-reg-contact-name'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-contact-name'] ) ) : '',
+            isset( $_POST['viabill-reg-shop-url'] ) ? esc_url_raw( wp_unslash( $_POST['viabill-reg-shop-url'] ) ) : '',          
             isset( $_POST['viabill-reg-phone'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-phone'] ) ) : '',
           );
 
-          $body = $this->connector->register( $email, $country, $additional_data );
+          $body = $this->connector->register( $email, $name, $country, $additional_data );
           $this->process_response_body( $response, $body );
           $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
 
@@ -234,6 +235,26 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
             ?>
 
             <?php
+            $current_user_id = get_current_user_id();
+            $user_data       = get_userdata( $current_user_id );
+            $user_phone      = get_user_meta( $current_user_id, 'billing_phone', true );
+            ?>
+
+            <?php
+            $this->do_field(
+              __( 'Contact name', 'viabill' ),
+              array(
+                'id'    => 'viabill-reg-contact-name',
+                'name'  => 'viabill-reg-contact-name',
+                'type'  => 'text',
+                'value' => $user_data->display_name ? $user_data->display_name : '',
+                'class' => 'input-text regular-input',
+                'required' => true,
+              )
+            );
+            ?>
+
+            <?php
             $this->do_field(
               __( 'Country', 'viabill' ),
               array(
@@ -260,26 +281,7 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
                 'required' => true,
               )
             );
-            ?>
-
-            <?php
-            $current_user_id = get_current_user_id();
-            $user_data       = get_userdata( $current_user_id );
-            $user_phone      = get_user_meta( $current_user_id, 'billing_phone', true );
-            ?>
-
-            <?php
-            $this->do_field(
-              __( 'Contact name', 'viabill' ),
-              array(
-                'id'    => 'viabill-reg-contact-name',
-                'name'  => 'viabill-reg-contact-name',
-                'type'  => 'text',
-                'value' => $user_data->display_name ? $user_data->display_name : '',
-                'class' => 'input-text regular-input',
-              )
-            );
-            ?>
+            ?>                       
 
             <?php
             $this->do_field(
