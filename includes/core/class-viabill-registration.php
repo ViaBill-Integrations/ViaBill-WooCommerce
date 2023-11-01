@@ -135,11 +135,7 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
           $body = $this->connector->register( $email, $name, $country, $additional_data );
           $this->process_response_body( $response, $body );
           $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
-
-          if ( $response['success'] ) {
-            $this->connector->set_pricetag_config();
-          }
-
+          
           return $response;
         } else {
           $this->logger->log( 'Failed to verify nonce \'' . $nonce . '\' while trying to register the merchant.', 'alert' );
@@ -155,10 +151,6 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
           $body = $this->connector->login( $email, $password );
           $this->process_response_body( $response, $body, true );
           $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
-
-          if ( $response['success'] ) {
-            $this->connector->set_pricetag_config();
-          }
 
           return $response;
         } else {

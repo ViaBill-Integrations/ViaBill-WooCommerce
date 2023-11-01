@@ -3,7 +3,7 @@
 
 # Prerequisites
 
--  A compatible WordPress and WooCommerce version. Note that this plugin is compatible with WooCommerce 3.3 or newer and it has been tested with WordPress up to 5.8.
+-  A compatible WordPress and WooCommerce version. Note that this plugin is compatible with WooCommerce 3.3 or newer and it has been tested with WordPress up to 6.4.
 -  As with _all_ WordPress plugins, it is highly recommended to backup your site before installation and to install and test on a staging environment prior to production deployments.
 
 # Installation

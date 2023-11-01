@@ -238,31 +238,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
       $response = wp_remote_post( $this->get_root_url() . 'register', $args );
       return $this->get_response_body( $response, '/register' );
-    }
-
-    /**
-     * Set priceTag config values and return response or false in case of failure.
-     *
-     * @return array|false
-     */
-    public function set_pricetag_config() {
-      $key  = get_option( 'viabill_key' );
-      $body = array(
-        'key'         => $key,
-        'signature'   => $this->get_signature( $key ),
-        'useObserver' => true,
-      );
-
-      $args = $this->get_default_args( $body );
-      if ( ! $args ) {
-        $this->logger->log( 'Failed to parse arguments for pricetag/config API request.', 'critical' );
-        return false;
-      }
-
-      $response = wp_remote_post( $this->get_root_url() . 'pricetag/config', $args );
-
-      return $this->get_response_body( $response, '/pricetag/config' );
-    }
+    }    
 
     /**
      * Capture given amount for a given order. Return array should have structure:

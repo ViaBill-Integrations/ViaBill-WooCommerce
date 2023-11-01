@@ -525,7 +525,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
       $form_url = $this->api->get_checkout_authorize_url($this->id);
 
-      ?>
+      ?>      
       <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
         <input type="hidden" name="protocol" value="3.0">
         <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
@@ -541,38 +541,46 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
         <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-      </form>      
-
-      <script>      
-      function postViabillPaymentForm() {
-        var formData = jQuery('#viabill-payment-form').serialize();
-        jQuery.ajax({
-          type: "POST",
-          url: "<?php echo $form_url; ?>",          
-          data: formData,		
-          dataType: "json",		
-          
-          success: function(data, textStatus){			
-            if (data.redirect) {                            
-              window.location.href = data.redirect;
-            } else {
-              console.log("No data redirect after posting ViaBill Payment Form");
-              console.log(data);
-            }
-          },
-          error: function(errMsg) {
-            console.log("Unable to post ViaBill Payment Form");
-            console.log(errMsg);			
-          }
-        }); 
-      }
-      </script>      
+      </form>                      
 
       <input type="button" value="Submit" onclick="postViabillPaymentForm()" />
-
       <?php
-      'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();
+
+      $inline_script = "        
+        window.postViabillPaymentForm = function() {          
+          var formData = jQuery('#viabill-payment-form').serialize();
+          jQuery.ajax({
+            type: 'POST',
+            url: '{$form_url}',
+            data: formData,
+            dataType: 'json',
+
+            success: function(data, textStatus){
+              if (data.redirect) {
+                window.location.href = data.redirect;
+              } else {
+                console.log('No data redirect after posting ViaBill Payment Form');
+                console.log(data);
+              }
+            },
+            error: function(errMsg) {
+              console.log('Unable to post ViaBill Payment Form');
+              console.log(errMsg);
+            }
+          }); 
+        }        
+      ";
       
+      // wp_add_inline_script( 'jquery', '<script>'.$inline_script.'</script>' );
+      wc_enqueue_js($inline_script);
+
+      if ($this->settings['auto-redirect'] === 'yes') {
+        $this->enqueue_redirect_js();
+      } else {
+        $this->show_receipt_message();
+      }
+
+      // 'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();      
     }
 
     /**
@@ -582,8 +590,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       // It's safe to use $ with WooCommerce.
       // If there's no redirect after 10 seconds, unblock the UI.
       wc_enqueue_js( "$('.woocommerce').block({message: null, overlayCSS: { background: '#fff', opacity: 0.6 }});" );
-      wc_enqueue_js( "setTimeout(function(){ $('.woocommerce').unblock(); }, 10000)" );
-      //wc_enqueue_js( "$('#viabill-payment-form').submit();" );
+      wc_enqueue_js( "setTimeout(function(){ $('.woocommerce').unblock(); }, 10000)" );      
       wc_enqueue_js( "postViabillPaymentForm();" );
     }
 
