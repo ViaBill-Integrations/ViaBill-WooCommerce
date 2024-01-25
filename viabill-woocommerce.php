@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.37
+ * Version: 1.1.38
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -102,6 +102,12 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       // add_action( 'activated_plugin', array( $this, 'check_backward_compatibility' ) );
       add_action( 'woocommerce_admin_field_payment_gateways', array( $this, 'check_for_other_viabill_gateways' ) );
 
+      // shortcodes for price tags
+      add_shortcode('viabill_pricetag_product', array( $this, 'viabill_pricetag_product_shortcode') );
+      add_shortcode('viabill_pricetag_cart', array( $this, 'viabill_pricetag_cart_shortcode') );
+      add_shortcode('viabill_pricetag_tbyb_checkout', array( $this, 'viabill_pricetag_tbyb_checkout_shortcode') );
+      add_shortcode('viabill_pricetag_monthly_checkout', array( $this, 'viabill_pricetag_monthly_checkout_shortcode') );
+
       new Viabill_Registration( true );
 
       $merchant = new Viabill_Merchant_Profile();
@@ -158,6 +164,34 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
 
       $pricetag = new Viabill_Pricetag();
       $pricetag->maybe_show();
+    }    
+
+    public function viabill_pricetag_product_shortcode() {
+      require_once( 'includes/core/class-viabill-pricetag.php' );
+
+      $pricetag = new Viabill_Pricetag();
+      $pricetag->show_on_product();
+    }
+
+    public function viabill_pricetag_cart_shortcode() {
+      require_once( 'includes/core/class-viabill-pricetag.php' );
+
+      $pricetag = new Viabill_Pricetag();
+      $pricetag->show_on_cart();
+    }
+
+    public function viabill_pricetag_monthly_checkout_shortcode() {
+      require_once( 'includes/core/class-viabill-pricetag.php' );
+
+      $pricetag = new Viabill_Pricetag();
+      $pricetag->show_on_monthly_checkout();
+    }
+
+    public function viabill_pricetag_tbyb_checkout_shortcode() {
+      require_once( 'includes/core/class-viabill-pricetag.php' );
+
+      $pricetag = new Viabill_Pricetag();
+      $pricetag->show_on_tbyb_checkout();
     }
 
     /**
@@ -205,7 +239,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.37' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.38' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
