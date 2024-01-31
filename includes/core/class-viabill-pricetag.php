@@ -246,13 +246,15 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      * @static
      * @return void
      */
-    public static function show_on_product() {
+    public static function show_on_product($inplace = false) {
       if ( ! is_product() ) {
         return;
       }
 
       global $product;
       $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
+      $settings['inplace'] = $inplace;
+
       self::show( 'product', 'product', wc_get_price_including_tax( $product ), $settings );
     }
 
@@ -262,8 +264,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      * @static
      * @return void
      */
-    public static function show_on_cart() {
+    public static function show_on_cart($inplace = false) {
       $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
+      $settings['inplace'] = $inplace;
 
       $totals = WC()->cart->get_totals();
       $total  = isset( $totals['total'] ) ? $totals['total'] : 0;
@@ -275,8 +278,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      *
      * @return void
      */
-    public static function show_on_checkout($payment_method = 'monthly') {
+    public static function show_on_checkout($payment_method = 'monthly', $inplace = false) {
       $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
+      $settings['inplace'] = $inplace;
 
       $totals = WC()->cart->get_totals();
       $total  = isset( $totals['total'] ) ? $totals['total'] : 0;
@@ -288,9 +292,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      *
      * @return void
      */
-    public static function show_on_monthly_checkout() {
+    public static function show_on_monthly_checkout($inplace = false) {
       $payment_method = 'monthly';
-      self::show_on_checkout($payment_method);      
+      self::show_on_checkout($payment_method, $inplace);      
     }
 
     /**
@@ -298,9 +302,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      *
      * @return void
      */
-    public static function show_on_tbyb_checkout() {
+    public static function show_on_tbyb_checkout($inplace = false) {
       $payment_method = 'tbyb';
-      self::show_on_checkout($payment_method);      
+      self::show_on_checkout($payment_method, $inplace);      
     }
 
     /**
@@ -317,6 +321,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       $dynamic_price_trigger = $dynamic_price . '-trigger';
       $position_field        = 'pricetag-position-' . $target;
       $position              = Viabill_Main::get_gateway_settings( 'pricetag-position-' . $target );
+      $position_inplace      = (isset($settings['inplace']))?$settings['inplace']:false;
       $style                 = Viabill_Main::get_gateway_settings( 'pricetag-style-' . $target );      
       $combination           = self::getValidCountryLanguageCurrencyCombination();
 
@@ -371,7 +376,9 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
             echo 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
           } 
           // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
-          if ( $position ) {
+          if ($position_inplace) {
+            echo 'class="viabill-pricetag" ';
+          } else if ( $position ) {
             echo 'data-append-target="' . esc_attr($position) . '" ';            
           } else {
             echo 'class="viabill-pricetag" ';

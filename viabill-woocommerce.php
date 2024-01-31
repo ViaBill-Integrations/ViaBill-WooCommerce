@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.38
+ * Version: 1.1.39
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -166,32 +166,64 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $pricetag->maybe_show();
     }    
 
-    public function viabill_pricetag_product_shortcode() {
+    public function viabill_pricetag_product_shortcode($atts) {
       require_once( 'includes/core/class-viabill-pricetag.php' );
 
+      // Define default attribute values
+      $atts = shortcode_atts(array(
+          'inplace' => false, // default is false
+      ), $atts, 'pricetag');
+
+      // Access the inplace attribute
+      $inplace = $atts['inplace'];
+
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_product();
+      $pricetag->show_on_product($inplace);
     }
 
-    public function viabill_pricetag_cart_shortcode() {
+    public function viabill_pricetag_cart_shortcode($atts) {
       require_once( 'includes/core/class-viabill-pricetag.php' );
 
+      // Define default attribute values
+      $atts = shortcode_atts(array(
+          'inplace' => false, // default is false
+      ), $atts, 'pricetag');
+
+      // Access the inplace attribute
+      $inplace = $atts['inplace'];
+
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_cart();
+      $pricetag->show_on_cart($inplace);
     }
 
-    public function viabill_pricetag_monthly_checkout_shortcode() {
+    public function viabill_pricetag_monthly_checkout_shortcode($atts) {
       require_once( 'includes/core/class-viabill-pricetag.php' );
 
+      // Define default attribute values
+      $atts = shortcode_atts(array(
+          'inplace' => false, // default is false
+      ), $atts, 'pricetag');
+
+      // Access the inplace attribute
+      $inplace = $atts['inplace'];
+
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_monthly_checkout();
+      $pricetag->show_on_monthly_checkout($inplace);
     }
 
-    public function viabill_pricetag_tbyb_checkout_shortcode() {
+    public function viabill_pricetag_tbyb_checkout_shortcode($atts) {
       require_once( 'includes/core/class-viabill-pricetag.php' );
 
+      // Define default attribute values
+      $atts = shortcode_atts(array(
+          'inplace' => false, // default is false
+      ), $atts, 'pricetag');
+
+      // Access the inplace attribute
+      $inplace = $atts['inplace'];
+
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_tbyb_checkout();
+      $pricetag->show_on_tbyb_checkout($inplace);
     }
 
     /**
@@ -239,7 +271,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.38' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.39' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
