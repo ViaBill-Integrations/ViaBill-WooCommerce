@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.39
+ * Version: 1.1.40
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -271,7 +271,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.39' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.40' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -758,3 +758,27 @@ add_action('rest_api_init', function () {
     'permission_callback' => function() { return true; }
   ));
 });
+
+/* HPOS (High-performance order storage) compatibility */
+add_action('before_woocommerce_init', function(){
+  if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+  }
+});
+
+if ( ! function_exists( 'wkwc_is_wc_order' ) ) {
+  /**
+   * Check is post WooCommerce order.
+   *
+   * @param int $post_id Post id.
+   *
+   * @return bool $bool True|false.
+   */
+  function wkwc_is_wc_order( $post_id = 0 ) {
+      $bool = false;
+      if ( 'shop_order' === OrderUtil::get_order_type( $post_id ) ) {
+          $bool = true;
+      }
+      return $bool;
+  }
+}
