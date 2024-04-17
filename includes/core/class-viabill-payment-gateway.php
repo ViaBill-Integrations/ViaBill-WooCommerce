@@ -546,7 +546,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       <input type="button" value="Submit" onclick="postViabillPaymentForm()" />
       <?php
 
-      $inline_script = "        
+      $inline_script = "
         window.postViabillPaymentForm = function() {          
           var formData = jQuery('#viabill-payment-form').serialize();
           jQuery.ajax({
@@ -1287,37 +1287,44 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
         <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-      </form>      
+      </form> 
 
-      <script>      
+      <input type="button" value="Submit" onclick="postViabillTryPaymentForm()" />
+      
+      <?php
+
+      $inline_script = "      
       function postViabillTryPaymentForm() {
         var formData = jQuery('#viabill-try-payment-form').serialize();
         jQuery.ajax({
-          type: "POST",
-          url: "<?php echo $form_url; ?>",          
+          type: 'POST',          
+          url: '{$form_url}',
           data: formData,		
-          dataType: "json",		
+          dataType: 'json',		
           
           success: function(data, textStatus){			
             if (data.redirect) {                            
               window.location.href = data.redirect;
             } else {
-              console.log("No data redirect after posting ViaBill Try Payment Form");
+              console.log('No data redirect after posting ViaBill Try Payment Form');
               console.log(data);
             }
           },
           error: function(errMsg) {
-            console.log("Unable to post ViaBill Try Payment Form");
+            console.log('Unable to post ViaBill Try Payment Form');
             console.log(errMsg);			
           }
         }); 
       }
-      </script>      
+      ";
 
-      <input type="button" value="Submit" onclick="postViabillTryPaymentForm()" />
+      wc_enqueue_js($inline_script);
 
-      <?php
-      'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();
+      if ($this->settings['auto-redirect'] === 'yes') {
+        $this->enqueue_redirect_js();
+      } else {
+        $this->show_receipt_message();
+      }                 
       
     }
 
