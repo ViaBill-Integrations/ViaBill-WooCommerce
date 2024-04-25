@@ -36,7 +36,7 @@ function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
         break;
   }
 
-  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
+  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
   return $icon;
 }
 
@@ -66,7 +66,7 @@ function get_try_gateway_icon( $string, $arg1 = null, $arg2 = null) {
         break;
   }
 
-  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill - Try before you Buy' ). '" />';
+  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill - Try before you Buy' ). '" />';
   return $icon;
 }
 

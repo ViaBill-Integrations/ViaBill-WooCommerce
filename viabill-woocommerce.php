@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.41
+ * Version: 1.1.42
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -230,21 +230,49 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * Check if payment gateway should be disabled.
      */
     public static function is_payment_gateway_disabled() {
-      return get_option( 'viabill_gateway_disabled' );
+      // the disabled gateway option is obsolete
+      // right now, the preferred way is to hide the payment method
+      // during the checkout page      
+      if (get_option( 'viabill_gateway_disabled' )) {        
+        self::set_payment_gateway_disabled();
+      }
+      return false;      
     }
 
     /**
      * Set payment gateway as disabled.
      */
     public static function set_payment_gateway_disabled() {
-      update_option( 'viabill_gateway_disabled', 1 );
+      // the disabled gateway option is obsolete
+      // right now, the preferred way is to hide the payment method
+      // during the checkout page
+      update_option( 'viabill_gateway_disabled', 0 );
+      
+      $option_key = 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings';
+      $settings = get_option($option_key);      
+      if (is_array($settings) && isset($settings['checkout-hide'])) {
+          $settings['checkout-hide'] = 'yes';
+          // Save the updated settings back to the database
+          update_option($option_key, $settings);
+      }
     }
 
     /**
      * Set payment gateway as enabled.
      */
     public static function set_payment_gateway_enabled() {
+      // the disabled gateway option is obsolete
+      // right now, the preferred way is to hide the payment method
+      // during the checkout page
       update_option( 'viabill_gateway_disabled', 0 );
+
+      $option_key = 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings';
+      $settings = get_option($option_key);      
+      if (is_array($settings) && isset($settings['checkout-hide'])) {
+          $settings['checkout-hide'] = 'no';
+          // Save the updated settings back to the database
+          update_option($option_key, $settings);
+      }
     }    
 
     /**
@@ -271,7 +299,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.41' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.42' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );

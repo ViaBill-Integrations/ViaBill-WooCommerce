@@ -18,6 +18,11 @@ jQuery(document).ready(function( $ ) {
     if ( $pricetag ) {
       let pricetag_selector = $pricetag.data('append-target');	      
       let insert_after = false;
+      
+      if (!pricetag_selector) {
+        console.log("No pricetag selector is specified");
+        return;
+      }
 
       // Check if the string contains ':after'
       if (pricetag_selector.includes(":after")) {
