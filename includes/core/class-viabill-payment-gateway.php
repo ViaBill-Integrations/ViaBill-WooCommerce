@@ -349,11 +349,20 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      * @override
      */
     public function get_icon() {
+      if ( isset( $this->settings['show_title_as_label'] ) && ! empty( $this->settings['show_title_as_label'] ) ) {
+        $display_option = $this->settings['show_title_as_label'];
+        if ($display_option == 'show_label_only') {
+          return '';
+        }
+      }
+
       $icon = (string) apply_filters( 'viabill_gateway_checkout_icon', 0 );
 
       if ( ! empty( $icon ) ) {
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
       }
+
+      return '';
     }
 
 
@@ -366,6 +375,14 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       if (is_admin()) {
         return parent::get_title();
       } else {
+
+        if ( isset( $this->settings['show_title_as_label'] ) && ! empty( $this->settings['show_title_as_label'] ) ) {
+          $display_option = $this->settings['show_title_as_label'];
+          if (($display_option == 'show_label_icon') || ($display_option == 'show_label_only')) {
+            return parent::get_title();
+          }
+        }
+
         return '';
       }      
     }
@@ -543,7 +560,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
       </form>                      
 
-      <input type="button" value="Submit" onclick="postViabillPaymentForm()" />
+      <input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />
       <?php
 
       $inline_script = "
@@ -568,7 +585,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
               console.log(errMsg);
             }
           }); 
-        }        
+        }      
+        
+        jQuery('#viabill-payment-form-submit').on('click', postViabillPaymentForm);
       ";
       
       // wp_add_inline_script( 'jquery', '<script>'.$inline_script.'</script>' );
@@ -588,9 +607,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      */
     private function enqueue_redirect_js() {
       // It's safe to use $ with WooCommerce.
-      // If there's no redirect after 10 seconds, unblock the UI.
-      wc_enqueue_js( "$('.woocommerce').block({message: null, overlayCSS: { background: '#fff', opacity: 0.6 }});" );
-      wc_enqueue_js( "setTimeout(function(){ $('.woocommerce').unblock(); }, 10000)" );      
+      // If there's no redirect after 10 seconds, unblock the UI.      
+      wc_enqueue_js( "if ($.fn.block) { $('.woocommerce').block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6}}); setTimeout(function(){ $('.woocommerce').unblock(); }, 10000); }" );      
+      //wc_enqueue_js( "$('#viabill-payment-form').submit();" );
       wc_enqueue_js( "postViabillPaymentForm();" );
     }
 
@@ -1095,11 +1114,20 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
      * @override
      */
     public function get_icon() {
-      $icon = (string) apply_filters( 'viabill_try_gateway_checkout_icon', 0 );
+      if ( isset( $this->settings['show_title_as_label'] ) && ! empty( $this->settings['show_title_as_label'] ) ) {
+        $display_option = $this->settings['show_title_as_label'];
+        if ($display_option == 'show_label_only') {
+          return '';
+        }
+      }
+
+      $icon = (string) apply_filters( 'viabill_try_gateway_checkout_icon', 0 );      
 
       if ( ! empty( $icon ) ) {
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
       }
+
+      return '';
     }
 
 
@@ -1112,6 +1140,14 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       if (is_admin()) {
         return parent::get_title();
       } else {
+
+        if ( isset( $this->settings['show_title_as_label'] ) && ! empty( $this->settings['show_title_as_label'] ) ) {
+          $display_option = $this->settings['show_title_as_label'];
+          if (($display_option == 'show_label_icon') || ($display_option == 'show_label_only')) {
+            return parent::get_title();
+          }
+        }
+
         return '';
       }      
     }
@@ -1289,7 +1325,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
       </form> 
 
-      <input type="button" value="Submit" onclick="postViabillTryPaymentForm()" />
+      <input type="button" id="viabill-try-payment-form-submit" value="Submit" onclick="postViabillTryPaymentForm()" />
       
       <?php
 
@@ -1316,6 +1352,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           }
         }); 
       }
+
+      jQuery('#viabill-try-payment-form-submit').on('click', postViabillTryPaymentForm);
       ";
 
       wc_enqueue_js($inline_script);
@@ -1333,9 +1371,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
      */
     private function enqueue_redirect_js() {
       // It's safe to use $ with WooCommerce.
-      // If there's no redirect after 10 seconds, unblock the UI.
-      wc_enqueue_js( "$('.woocommerce').block({message: null, overlayCSS: { background: '#fff', opacity: 0.6 }});" );
-      wc_enqueue_js( "setTimeout(function(){ $('.woocommerce').unblock(); }, 10000)" );
+      // If there's no redirect after 10 seconds, unblock the UI.      
+      wc_enqueue_js( "if ($.fn.block) { $('.woocommerce').block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6}}); setTimeout(function(){ $('.woocommerce').unblock(); }, 10000); }" );      
       //wc_enqueue_js( "$('#viabill-payment-form').submit();" );
       wc_enqueue_js( "postViabillTryPaymentForm();" );
     }

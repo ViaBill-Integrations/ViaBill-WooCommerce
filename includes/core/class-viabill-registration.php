@@ -273,8 +273,8 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
                 'required' => true,
               )
             );
-            ?>                       
-
+            ?>
+            
             <?php
             $this->do_field(
               __( 'Phone number', 'viabill' ),

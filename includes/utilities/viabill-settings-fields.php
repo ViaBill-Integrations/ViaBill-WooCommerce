@@ -33,6 +33,19 @@ return array(
     'default'     => __( 'ViaBill', 'viabill' ),
     'desc_tip'    => true,
   ),
+  /*
+  'show_title_as_label' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'	=> __( 'Show Title as Payment Label', 'viabill' ),
+    'type'	=> 'select',    
+    'description' => __( 'It is recommended to you keep the default option (icon only)', 'viabill' ),
+    'options'	=> ['hide_label' => 'Show only Payment Icon', 
+                  'show_label_icon'=>'Show Payment label and icon',
+                  'show_label_only'=>'Show Payment label only'],
+    'default'  => 'hide_label',
+    'class'    => 'wc-enhanced-select',
+    'desc_tip'    => false,
+  ),
+  */
   'description-msg' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'       => __( 'Description', 'viabill' ),
     'type'        => 'textarea',
