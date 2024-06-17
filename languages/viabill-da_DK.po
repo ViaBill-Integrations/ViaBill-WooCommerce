@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ViaBill payment gateway\n"
 "POT-Creation-Date: 2021-07-28 18:13+0300\n"
-"PO-Revision-Date: 2022-06-14 07:55+0000\n"
+"PO-Revision-Date: 2024-06-17 11:06+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
 "Language: da_DK\n"
@@ -804,6 +804,13 @@ msgid ""
 msgstr ""
 "Ved at ændre ordrestatus til \"Behandler\" vil du samtidig forsøge at hæve "
 "ordren. Er du sikker på du ønsker at fortsætte?"
+
+#. Various
+msgid "Tax ID"
+msgstr "CVR"
+
+msgid "Tax ID cannot be empty, or contain an invalid value. Please try again."
+msgstr "CVR kan ikke være tom eller indeholde en ugyldig værdi. Prøv igen."
 
 #: includes/core/class-viabill-registration.php:299
 msgid "terms & conditions"

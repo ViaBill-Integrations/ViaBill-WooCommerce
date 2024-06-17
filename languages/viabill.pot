@@ -975,3 +975,10 @@ msgstr ""
 
 msgid "Select the order status after the payment is fully captured by Viabill"
 msgstr ""
+
+#. Various
+msgid "Tax ID"
+msgstr ""
+
+msgid "Tax ID cannot be empty, or contain an invalid value. Please try again."
+msgstr ""

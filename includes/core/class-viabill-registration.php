@@ -121,18 +121,28 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
       if ( isset( $_POST[ self::SLUG ] ) && isset( $_POST[ self::SLUG . '-nonce' ] ) ) {
         $nonce = sanitize_key( $_POST[ self::SLUG . '-nonce' ] );
         if ( wp_verify_nonce( $nonce, self::SLUG . '-action' ) === 1 ) {
-          $country = isset( $_POST['viabill-reg-country'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-country'] ) ) : '';
+          $country = isset( $_POST['viabill-reg-country'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['viabill-reg-country'] ) ) ) : '';
 
           $email = isset( $_POST['viabill-reg-email'] ) ? sanitize_email( wp_unslash( $_POST['viabill-reg-email'] ) ) : '';
 
           $name = isset( $_POST['viabill-reg-contact-name'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-contact-name'] ) ) : '';
 
+          $tax_id = isset( $_POST['viabill-reg-taxid'] ) ? $this->sanitize_tax_id( wp_unslash( $_POST['viabill-reg-taxid'] ), $country ) : '';
+
+          if (($country == 'ES') && (empty($tax_id))) {
+            $response = array(
+              'success' => false,
+              'message' => __( 'Tax ID cannot be empty, or contain an invalid value. Please try again.', 'viabill' ),
+            );    
+            return $response;
+          }
+
           $additional_data = array(
-            isset( $_POST['viabill-reg-shop-url'] ) ? esc_url_raw( wp_unslash( $_POST['viabill-reg-shop-url'] ) ) : '',          
+            isset( $_POST['viabill-reg-shop-url'] ) ? esc_url_raw( wp_unslash( $_POST['viabill-reg-shop-url'] ) ) : '',
             isset( $_POST['viabill-reg-phone'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-phone'] ) ) : '',
           );
 
-          $body = $this->connector->register( $email, $name, $country, $additional_data );
+          $body = $this->connector->register( $email, $name, $country, $tax_id, $additional_data );
           $this->process_response_body( $response, $body );
           $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
           
@@ -283,6 +293,19 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
                 'name'  => 'viabill-reg-phone',
                 'type'  => 'phone',
                 'value' => $user_phone,
+                'class' => 'input-text regular-input',
+              )
+            );
+            ?>
+
+            <?php
+            $this->do_field(
+              __( 'Tax ID', 'viabill' ),
+              array(
+                'id'    => 'viabill-reg-taxid',
+                'name'  => 'viabill-reg-taxid',
+                'type'  => 'text',
+                'value' => '',
                 'class' => 'input-text regular-input',
               )
             );
@@ -476,6 +499,33 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
         self::SLUG,
         array( $this, 'show' )
       );
+    }
+
+    /**
+     * Sanitize and format the Tax ID (if given)
+     */
+    public function sanitize_tax_id($tax_id, $country) {
+       $tax_id = str_replace(array(' ','-'), '', trim($tax_id));
+       if ($country == 'ES') {        
+        $regex_with_prefix = '/^ES[0-9A-Z]*/';
+        if (preg_match($regex_with_prefix, $tax_id)) {
+          return $tax_id;
+        }
+        $regex_without_prefix = '/^[0-9A-Z]+/';
+        if (preg_match($regex_without_prefix, $tax_id)) {
+          return 'ES'.$tax_id;
+        }
+       } else if ($country == 'DK') {
+         $regex_with_prefix = '/^DK[0-9]{8}$/';
+         if (preg_match($regex_with_prefix, $tax_id)) {
+          return $tax_id;
+         }
+         $regex_without_prefix = '/^[0-9]{8}$/';
+         if (preg_match($regex_without_prefix, $tax_id)) {
+          return 'DK'.$tax_id;
+         }
+       }
+       return '';
     }
   }
 }

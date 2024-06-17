@@ -268,9 +268,20 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
       $settings['inplace'] = $inplace;
 
-      $totals = WC()->cart->get_totals();
-      $total  = isset( $totals['total'] ) ? $totals['total'] : 0;
-      self::show( 'basket', 'cart', $total, $settings );
+      // Check if WC() and WC()->cart are available
+  	  if ( function_exists( 'WC' ) && WC() && isset( WC()->cart ) ) {
+        $totals = WC()->cart->get_totals();
+        $total = isset( $totals['total'] ) ? $totals['total'] : 0;
+      } else {
+        // Handle the case when WC() or WC()->cart is not available
+        $total = 0; // Default value or handle differently
+      }
+           
+      if ($inplace) { 		   	    
+        return self::show( 'basket', 'cart', $total, $settings );
+      } else {
+        self::show( 'basket', 'cart', $total, $settings );
+      }      
     }
 
     /**
@@ -366,28 +377,31 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
           'dynamic-price'          => isset( $settings[ $dynamic_price ] ) && ! empty( $settings[ $dynamic_price ] ) ? $settings[ $dynamic_price ] : '',
           'dynamic-price-triggers' => isset( $settings[ $dynamic_price_trigger ] ) && ! empty( $settings[ $dynamic_price_trigger ] ) ? $settings[ $dynamic_price_trigger ] : '',          
         )
-      );      
+      );
+      
+      $style_html = (!empty($style)) ? 'style="'.esc_attr($style).'"' : '';  
+      
+      $html = '<div class="viabill-pricetag-wrap" '.$style_html.'><div '.$product_types_str.' ';
+      foreach ($attrs as $attr_name => $attr_value) {
+        $html .= 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
+      } 
 
-      ?>
-      <div class="viabill-pricetag-wrap" <?php echo $style ? 'style="' . esc_attr($style) . '"' : '' ?>>
-        <div <?php echo $product_types_str; ?> 
-        <?php 
-          foreach ($attrs as $attr_name => $attr_value) {
-            echo 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
-          } 
-          // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
-          if ($position_inplace) {
-            echo 'class="viabill-pricetag" ';
-          } else if ( $position ) {
-            echo 'data-append-target="' . esc_attr($position) . '" ';            
-          } else {
-            echo 'class="viabill-pricetag" ';
-          }         
-        ?>
-        >
-        </div>
-      </div>
-      <?php
+      // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
+      if ($position_inplace) {
+        $html .= 'class="viabill-pricetag" ';
+      } else if ( $position ) {
+        $html .= 'data-append-target="' . esc_attr($position) . '" ';            
+      } else {
+        $html .= 'class="viabill-pricetag" ';
+      }   
+
+      $html .= ' /></div>';
+            
+      if ($position_inplace) {		  
+        return $html;
+      } else {
+        echo $html;
+      }        
     }
 
     /**

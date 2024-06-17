@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.44
+ * Version: 1.1.46
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -21,6 +21,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
+
+  add_action( 'before_woocommerce_init', 'viabill_hpos_compatibility' );
+
+  function viabill_hpos_compatibility() {
+
+    if( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+        'custom_order_tables',
+        __FILE__,
+        true // true (compatible, default) or false (not compatible)
+      );
+    }
+  }
+
   /**
    * Return true if the WooCommerce plugin is active or false otherwise.
    *
@@ -84,8 +98,8 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * @since 0.1
      */
     protected function __construct() {
-      require_once( 'includes/core/class-viabill-registration.php' );
-      require_once( 'includes/core/class-viabill-merchant-profile.php' );
+      require_once(plugin_dir_path( __FILE__ ). 'includes/core/class-viabill-registration.php' );
+      require_once(plugin_dir_path( __FILE__ ). 'includes/core/class-viabill-merchant-profile.php' );
 
       self::register_constants();
 
@@ -126,16 +140,16 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * Load ViaBill Payment Gateway.
      */
     public function init_payment_gateway() {
-      require_once( 'includes/core/class-viabill-payment-gateway.php' );
-      require_once( 'includes/core/class-viabill-order-admin.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-payment-gateway.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-order-admin.php' );
 
-      require_once( 'includes/core/class-viabill-notices.php' );
-      require_once( 'includes/core/class-viabill-support.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-support.php' );
 
-      require_once( 'includes/utilities/class-viabill-icon-shortcode.php' );
-      require_once( 'includes/utilities/class-viabill-db-update.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/utilities/class-viabill-icon-shortcode.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/utilities/class-viabill-db-update.php' );
 
-      require_once( 'includes/core/class-viabill-api.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-api.php' );
 
       $payment_operations = new Viabill_Order_Admin();
       $payment_operations->register_ajax_endpoints();
@@ -160,14 +174,14 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * Load ViaBill PriceTags
      */
     public function init_pricetags() {
-      require_once( 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
 
       $pricetag = new Viabill_Pricetag();
       $pricetag->maybe_show();
     }    
 
     public function viabill_pricetag_product_shortcode($atts) {
-      require_once( 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -178,11 +192,11 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $inplace = $atts['inplace'];
 
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_product($inplace);
+      return $pricetag->show_on_product($inplace);
     }
 
     public function viabill_pricetag_cart_shortcode($atts) {
-      require_once( 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -193,11 +207,11 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $inplace = $atts['inplace'];
 
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_cart($inplace);
+      return $pricetag->show_on_cart($inplace);
     }
 
     public function viabill_pricetag_monthly_checkout_shortcode($atts) {
-      require_once( 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -208,11 +222,11 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $inplace = $atts['inplace'];
 
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_monthly_checkout($inplace);
+      return $pricetag->show_on_monthly_checkout($inplace);
     }
 
     public function viabill_pricetag_tbyb_checkout_shortcode($atts) {
-      require_once( 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -223,7 +237,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $inplace = $atts['inplace'];
 
       $pricetag = new Viabill_Pricetag();
-      $pricetag->show_on_tbyb_checkout($inplace);
+      return $pricetag->show_on_tbyb_checkout($inplace);
     }
 
     /**
@@ -299,7 +313,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.44' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.46' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -634,9 +648,9 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       }
 
       self::register_constants();
-      require_once( 'includes/core/class-viabill-merchant-profile.php' );
-      require_once( 'includes/core/class-viabill-notices.php' );
-      require_once( 'includes/core/class-viabill-support.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-merchant-profile.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-support.php' );
 
       $merchant = new Viabill_Merchant_Profile();
       $merchant->delete_registration_data();
@@ -663,7 +677,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       delete_option( 'viabill_gateway_disabled' );
 
       self::register_constants();
-      require_once( 'includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
 
       $notices = new Viabill_Notices();
       $notices->destroy_cron();
@@ -785,13 +799,6 @@ add_action('rest_api_init', function () {
     'callback' => array( 'Viabill_Main', 'disable_third_party_payment' ),
     'permission_callback' => function() { return true; }
   ));
-});
-
-/* HPOS (High-performance order storage) compatibility */
-add_action('before_woocommerce_init', function(){
-  if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
-      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
-  }
 });
 
 if ( ! function_exists( 'wkwc_is_wc_order' ) ) {

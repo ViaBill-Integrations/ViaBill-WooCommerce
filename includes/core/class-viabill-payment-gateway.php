@@ -209,7 +209,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
       $this->title = esc_attr( isset( $this->settings['title'] ) ? $this->settings['title'] : '' );
-      $this->add_actions();
+      $this->add_actions();      
     }
 
     /**
@@ -647,6 +647,13 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         'result'   => 'success',
         'redirect' => $order->get_checkout_payment_url( true ),
       );
+    }
+
+    /**
+     *  Declare compatibility with HPOS   
+     */
+    public function custom_order_tables() {
+      return true;
     }
 
     /**
@@ -1411,6 +1418,13 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         'result'   => 'success',
         'redirect' => $order->get_checkout_payment_url( true ),
       );
+    }
+
+    /**
+     *  Declare compatibility with HPOS   
+     */
+    public function custom_order_tables() {
+      return true;
     }
 
     /**

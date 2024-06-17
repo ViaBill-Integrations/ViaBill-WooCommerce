@@ -15,7 +15,7 @@ jQuery(document).ready(function( $ ) {
   // Allow PriceTag location change from the plugin PriceTags settings
   function appendPricetag() {
     let $pricetag = $('[data-append-target]');
-    if ( $pricetag ) {
+    if ($pricetag.length) {    
       let pricetag_selector = $pricetag.data('append-target');	      
       let insert_after = false;
       
@@ -32,9 +32,9 @@ jQuery(document).ready(function( $ ) {
 
       let insert_element = $pricetag.closest('div');
       if (insert_after) {
-        $( pricetag_selector ).after(insert_element);
+        $( pricetag_selector ).first().after(insert_element);
       } else {
-        $( pricetag_selector ).before(insert_element);
+        $( pricetag_selector ).first().before(insert_element);
       }      
       $pricetag.addClass( 'viabill-pricetag' );
     }

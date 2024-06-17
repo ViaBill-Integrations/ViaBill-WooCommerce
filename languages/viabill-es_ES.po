@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ViaBill - WooCommerce\n"
 "POT-Creation-Date: 2021-07-28 17:46+0300\n"
-"PO-Revision-Date: 2022-03-28 10:31+0000\n"
+"PO-Revision-Date: 2024-06-17 11:03+0000\n"
 "Last-Translator: \n"
 "Language-Team: Spanish (Spain)\n"
 "Language: es_ES\n"
@@ -141,8 +141,8 @@ msgstr "Cantidad ya capturada"
 #, php-format
 msgid "Approved <span class=\"count\">(%s)</span>"
 msgid_plural "Approved <span class=\"count\">(%s)</span>"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Aprovado <span class=\"count\">(%s)</span>"
+msgstr[1] "Aprovados <span class=\"count\">(%s)</span>"
 
 #: viabill-woocommerce.php:373
 msgid "Are you sure you want to cancel the order?"
@@ -198,8 +198,8 @@ msgstr "Capturó %s mediante la Pasarela de pago ViaBill"
 #, php-format
 msgid "Captured <span class=\"count\">(%s)</span>"
 msgid_plural "Captured <span class=\"count\">(%s)</span>"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Capturado <span class=\"count\">(%s)</span>"
+msgstr[1] "Capturados <span class=\"count\">(%s)</span>"
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:111
 msgid "Cart dynamic price selector"
@@ -838,6 +838,15 @@ msgstr ""
 "Cambiar el estado del pedido a “Procesando” intentará capturar la cantidad "
 "completa del pedido mediante ViaBill. ¿Desea continuar?"
 
+#. Various
+msgid "Tax ID"
+msgstr "CIF/NIF"
+
+msgid "Tax ID cannot be empty, or contain an invalid value. Please try again."
+msgstr ""
+"CIF/NIF no puede estar vacío ni contener un valor no válido. Inténtalo de "
+"nuevo."
+
 #: includes/core/class-viabill-registration.php:299
 msgid "terms & conditions"
 msgstr "términos y condiciones"
@@ -860,6 +869,12 @@ msgid ""
 "the other plugins that have the ViaBill payment gateway enabled. You may "
 "then reactivate ViaBill - WooCommerce."
 msgstr ""
+"La pasarela de pago ViaBill proporcionada por el complemento ViaBill - "
+"WooCommerce se ha deshabilitado debido a que hay más de un complement "
+"actualmente activo que ofrece la pasarela de pago ViaBill. Si deseas "
+"utilizar el complemento ViaBill - WooCommerce para ofrecer la pasarela de "
+"pago ViaBill, desactiva los otros complementos que tienen la pasarela de "
+"pago ViaBill habilitada. Luego podrás reactivar ViaBill - WooCommerce."
 
 #: includes/utilities/viabill-settings-fields.php:17
 msgid "This controls the title which the user sees during the checkout."
@@ -1106,6 +1121,9 @@ msgid ""
 "ViaBill payment gateway from the plugin ViaBill - WooCommerce has been "
 "disabled."
 msgstr ""
+"Sólo puedes tener activa una pasarela de pago ViaBill al mismo tiempo. La "
+"pasarela de pago ViaBill del complemento ViaBill - WooCommerce ha sido "
+"deshabilitada."
 
 #: includes/core/class-viabill-notices.php:398
 msgid "You have new"

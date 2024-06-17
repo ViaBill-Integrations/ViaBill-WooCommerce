@@ -220,16 +220,29 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @param  array  $additional_data Defaults to empty array.
      * @return array|false
      */
-    public function register( $email, $name, $country, $additional_data = array() ) {
-      $request_body = array(
-        'email'          => $email,
-        'name'           => $name, 
-        'country'        => $country,
-        'url'            => get_site_url(),
-        'additionalInfo' => $additional_data,
-        'affiliate'      => 'WOOCOMMERCE',
-      );
+    public function register( $email, $name, $country, $tax_id, $additional_data = array() ) {
 
+      if (!empty($tax_id)) {
+        $request_body = array(
+          'email'          => $email,
+          'name'           => $name, 
+          'country'        => $country,
+          'taxId'          => $tax_id,
+          'url'            => get_site_url(),        
+          'additionalInfo' => $additional_data,
+          'affiliate'      => 'WOOCOMMERCE',
+        );
+      } else {
+        $request_body = array(
+          'email'          => $email,
+          'name'           => $name, 
+          'country'        => $country,
+          'url'            => get_site_url(),        
+          'additionalInfo' => $additional_data,
+          'affiliate'      => 'WOOCOMMERCE',
+        );
+      }
+            
       $args = $this->get_default_args( $request_body );
       if ( ! $args ) {
         $this->logger->log( 'Failed to parse arguments for /register API request.', 'critical' );
