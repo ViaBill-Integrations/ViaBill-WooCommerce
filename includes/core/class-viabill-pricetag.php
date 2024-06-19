@@ -395,7 +395,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         $html .= 'class="viabill-pricetag" ';
       }   
 
-      $html .= ' /></div>';
+      $html .= '></div></div>';
             
       if ($position_inplace) {		  
         return $html;

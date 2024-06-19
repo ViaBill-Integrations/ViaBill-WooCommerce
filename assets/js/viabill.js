@@ -18,6 +18,7 @@ jQuery(document).ready(function( $ ) {
     if ($pricetag.length) {    
       let pricetag_selector = $pricetag.data('append-target');	      
       let insert_after = false;
+      let insert_first = false;
       
       if (!pricetag_selector) {
         console.log("No pricetag selector is specified");
@@ -28,13 +29,26 @@ jQuery(document).ready(function( $ ) {
       if (pricetag_selector.includes(":after")) {
           insert_after = true;
           pricetag_selector = pricetag_selector.replace(":after", "").trim();
-      }      
+      }
+      
+      if (pricetag_selector.includes(":first")) {
+        insert_first = true;
+        pricetag_selector = pricetag_selector.replace(":first", "").trim();
+      }
 
       let insert_element = $pricetag.closest('div');
       if (insert_after) {
-        $( pricetag_selector ).first().after(insert_element);
+        if (insert_first) {
+          $( pricetag_selector ).first().after(insert_element);
+        } else {
+          $( pricetag_selector ).after(insert_element);
+        }        
       } else {
-        $( pricetag_selector ).first().before(insert_element);
+        if (insert_first) {
+          $( pricetag_selector ).first().before(insert_element);
+        } else {
+          $( pricetag_selector ).before(insert_element);
+        }
       }      
       $pricetag.addClass( 'viabill-pricetag' );
     }

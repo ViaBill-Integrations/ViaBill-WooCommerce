@@ -823,9 +823,16 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           $product_discount_price = ($product_initial_price - $product_sales_price);
           if ($product_discount_price > 0.01) {
             $product_entry['discount'] = number_format($product_discount_price * $product_quantity, 2);
-          }
-
-          $categories = $product->get_categories(); 
+          }          
+          
+          if ( function_exists( 'wc_get_product_category_list' ) ) {
+            // Use the new function if it exists
+            $categories = wc_get_product_category_list( $product_id );
+          } else {
+            // Fallback to the deprecated function if the new one doesn't exist
+            $categories = $product->get_categories();
+          }		  		 
+          
           if (!empty($categories)) {
             if (is_array($categories)) {
               $product_entry['categories'] = implode(';', $categories);
