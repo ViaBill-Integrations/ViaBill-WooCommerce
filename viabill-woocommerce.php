@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.47
+ * Version: 1.1.48
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -20,20 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   exit;
 }
 
-if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
-
-  add_action( 'before_woocommerce_init', 'viabill_hpos_compatibility' );
-
-  function viabill_hpos_compatibility() {
-
-    if( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
-      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
-        'custom_order_tables',
-        __FILE__,
-        true // true (compatible, default) or false (not compatible)
-      );
-    }
-  }
+if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {  
 
   /**
    * Return true if the WooCommerce plugin is active or false otherwise.
@@ -47,6 +34,71 @@ if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
     }
     return false;
   }
+
+  function register_compatibility() {
+    add_action( 'before_woocommerce_init', 'viabill_hpos_compatibility' );
+    add_action( 'before_woocommerce_init', 'declare_cart_checkout_blocks_compatibility');
+    add_action( 'woocommerce_blocks_loaded', 'viabill_register_order_approval_payment_method_type');
+  }
+
+  /**
+  * Declare support for the HPOS mode
+  */
+  function viabill_hpos_compatibility() {
+    if( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+        'custom_order_tables',
+        __FILE__,
+        true // true (compatible, default) or false (not compatible)
+      );
+    }
+  }
+
+  /**
+   * Custom function to declare compatibility with cart_checkout_blocks feature 
+   */
+  function declare_cart_checkout_blocks_compatibility() {				
+    // Check if the required class exists
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+      // Declare compatibility for 'cart_checkout_blocks'
+      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+    }
+  }
+      
+  /**
+  * Custom function to register a payment method type
+  */
+  function viabill_register_order_approval_payment_method_type() {				
+    // Check if the required class exists
+    if ( ! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+      return;
+    }
+
+    // Include the custom Blocks Checkout class for the Monthly Payments
+    require_once VIABILL_DIR_PATH . '/includes/utilities/class-viabill-woocommerce-block-checkout.php';		
+    add_action(
+      'woocommerce_blocks_payment_method_type_registration',
+      function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+        // Register an instance of WC_Viabill_Blocks
+        $payment_method_registry->register( new WC_Viabill_Blocks );
+      }
+    );
+
+    // Include the custom Blocks Checkout class for the Try Before you Buy
+    require_once VIABILL_DIR_PATH . '/includes/utilities/class-viabill-try-woocommerce-block-checkout.php';
+    add_action(
+      'woocommerce_blocks_payment_method_type_registration',
+      function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+        // Register an instance of WC_Viabill_Blocks
+        $payment_method_registry->register( new WC_Viabill_Try_Blocks );
+      }
+    );
+  }
+
+  register_compatibility(); 
+
+
+
 }
 
 if ( ! function_exists( 'viabill_admin_notice_missing_woocommerce' ) ) {
@@ -134,22 +186,23 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
           $this->init_payment_gateway();
         }
       }
+      
     }
 
     /**
      * Load ViaBill Payment Gateway.
      */
     public function init_payment_gateway() {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-payment-gateway.php' );
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-order-admin.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-payment-gateway.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-order-admin.php' );
 
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-support.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-support.php' );
 
-      require_once(VIABILL_DIR_PATH. 'includes/utilities/class-viabill-icon-shortcode.php' );
-      require_once(VIABILL_DIR_PATH. 'includes/utilities/class-viabill-db-update.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/utilities/class-viabill-icon-shortcode.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/utilities/class-viabill-db-update.php' );
 
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-api.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-api.php' );
 
       $payment_operations = new Viabill_Order_Admin();
       $payment_operations->register_ajax_endpoints();
@@ -174,14 +227,14 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * Load ViaBill PriceTags
      */
     public function init_pricetags() {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-pricetag.php' );
 
       $pricetag = new Viabill_Pricetag();
       $pricetag->maybe_show();
     }    
 
     public function viabill_pricetag_product_shortcode($atts) {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -196,7 +249,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
     }
 
     public function viabill_pricetag_cart_shortcode($atts) {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -211,7 +264,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
     }
 
     public function viabill_pricetag_monthly_checkout_shortcode($atts) {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -226,7 +279,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
     }
 
     public function viabill_pricetag_tbyb_checkout_shortcode($atts) {
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-pricetag.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-pricetag.php' );
 
       // Define default attribute values
       $atts = shortcode_atts(array(
@@ -313,7 +366,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.47' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.48' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -648,9 +701,9 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       }
 
       self::register_constants();
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-merchant-profile.php' );
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-support.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-merchant-profile.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-support.php' );
 
       $merchant = new Viabill_Merchant_Profile();
       $merchant->delete_registration_data();
@@ -677,7 +730,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       delete_option( 'viabill_gateway_disabled' );
 
       self::register_constants();
-      require_once(VIABILL_DIR_PATH. 'includes/core/class-viabill-notices.php' );
+      require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-notices.php' );
 
       $notices = new Viabill_Notices();
       $notices->destroy_cron();
@@ -817,3 +870,5 @@ if ( ! function_exists( 'wkwc_is_wc_order' ) ) {
       return $bool;
   }
 }
+
+register_compatibility();

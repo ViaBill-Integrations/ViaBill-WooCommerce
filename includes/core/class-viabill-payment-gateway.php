@@ -492,6 +492,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      * @param int $order_id
      */
     public function do_receipt_page( $order_id ) {
+      static $executed = false;
+
       $order = wc_get_order( $order_id );
       if ( ! $order ) {
         $this->logger->log( 'Failed to find order ' . $order_id . ' while trying to show receipt page.', 'warning' );
@@ -540,63 +542,68 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       $debug_info_str = print_r($debug_info, true);
       $this->logger->log( $debug_info_str, 'notice');
 
-      $form_url = $this->api->get_checkout_authorize_url($this->id);
+      if (!$executed) {      
 
-      ?>      
-      <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
-        <input type="hidden" name="protocol" value="3.0">
-        <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
-        <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
-        <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
-        <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
-        <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
-        <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
-        <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
-        <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
-        <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
-        <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
-        <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-      </form>                      
+        $form_url = $this->api->get_checkout_authorize_url($this->id);
 
-      <input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />
-      <?php
+        ?>      
+        <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
+          <input type="hidden" name="protocol" value="3.0">
+          <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
+          <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
+          <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
+          <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
+          <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
+          <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
+          <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
+          <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
+          <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
+          <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
+          <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
+        </form>                      
 
-      $inline_script = "
-        window.postViabillPaymentForm = function() {          
-          var formData = jQuery('#viabill-payment-form').serialize();
-          jQuery.ajax({
-            type: 'POST',
-            url: '{$form_url}',
-            data: formData,
-            dataType: 'json',
+        <input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />
+        <?php
 
-            success: function(data, textStatus){
-              if (data.redirect) {
-                window.location.href = data.redirect;
-              } else {
-                console.log('No data redirect after posting ViaBill Payment Form');
-                console.log(data);
+        $inline_script = "
+          window.postViabillPaymentForm = function() {          
+            var formData = jQuery('#viabill-payment-form').serialize();
+            jQuery.ajax({
+              type: 'POST',
+              url: '{$form_url}',
+              data: formData,
+              dataType: 'json',
+
+              success: function(data, textStatus){
+                if (data.redirect) {
+                  window.location.href = data.redirect;
+                } else {
+                  console.log('No data redirect after posting ViaBill Payment Form');
+                  console.log(data);
+                }
+              },
+              error: function(errMsg) {
+                console.log('Unable to post ViaBill Payment Form');
+                console.log(errMsg);
               }
-            },
-            error: function(errMsg) {
-              console.log('Unable to post ViaBill Payment Form');
-              console.log(errMsg);
-            }
-          }); 
-        }      
+            }); 
+          }      
+          
+          jQuery('#viabill-payment-form-submit').on('click', postViabillPaymentForm);
+        ";
         
-        jQuery('#viabill-payment-form-submit').on('click', postViabillPaymentForm);
-      ";
-      
-      // wp_add_inline_script( 'jquery', '<script>'.$inline_script.'</script>' );
-      wc_enqueue_js($inline_script);
+        // wp_add_inline_script( 'jquery', '<script>'.$inline_script.'</script>' );
+        wc_enqueue_js($inline_script);
 
-      if ($this->settings['auto-redirect'] === 'yes') {
-        $this->enqueue_redirect_js();
-      } else {
-        $this->show_receipt_message();
+        if ($this->settings['auto-redirect'] === 'yes') {
+          $this->enqueue_redirect_js();
+        } else {
+          $this->show_receipt_message();
+        }
+
+        $executed = true;
       }
 
       // 'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();      
@@ -983,7 +990,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
 if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
   /**
-   * Viabill_Payment_Gateway class
+   * Viabill_Try_Payment_Gateway class
    */
   class Viabill_Try_Payment_Gateway extends WC_Payment_Gateway {
     /**
@@ -1271,6 +1278,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
      * @param int $order_id
      */
     public function do_receipt_page( $order_id ) {
+      static $executed = false;
+
       $order = wc_get_order( $order_id );
       if ( ! $order ) {
         $this->logger->log( 'Failed to find order ' . $order_id . ' while trying to show receipt page.', 'warning' );
@@ -1318,65 +1327,70 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       );
       $debug_info_str = print_r($debug_info, true);
       $this->logger->log( $debug_info_str, 'notice');
+
+      if (!$executed) {      
       
-      $form_url = $this->api->get_checkout_authorize_url($this->id);
+        $form_url = $this->api->get_checkout_authorize_url($this->id);
 
-      ?>
-      <form id="viabill-try-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
-        <input type="hidden" name="protocol" value="3.0">
-        <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
-        <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
-        <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
-        <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
-        <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
-        <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
-        <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
-        <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
-        <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
-        <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
-        <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-      </form> 
+        ?>
+        <form id="viabill-try-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
+          <input type="hidden" name="protocol" value="3.0">
+          <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
+          <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
+          <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
+          <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
+          <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
+          <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
+          <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
+          <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
+          <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
+          <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
+          <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
+        </form> 
 
-      <input type="button" id="viabill-try-payment-form-submit" value="Submit" onclick="postViabillTryPaymentForm()" />
-      
-      <?php
+        <input type="button" id="viabill-try-payment-form-submit" value="Submit" onclick="postViabillTryPaymentForm()" />
+        
+        <?php
 
-      $inline_script = "      
-      function postViabillTryPaymentForm() {
-        var formData = jQuery('#viabill-try-payment-form').serialize();
-        jQuery.ajax({
-          type: 'POST',          
-          url: '{$form_url}',
-          data: formData,		
-          dataType: 'json',		
-          
-          success: function(data, textStatus){			
-            if (data.redirect) {                            
-              window.location.href = data.redirect;
-            } else {
-              console.log('No data redirect after posting ViaBill Try Payment Form');
-              console.log(data);
+        $inline_script = "      
+        function postViabillTryPaymentForm() {
+          var formData = jQuery('#viabill-try-payment-form').serialize();
+          jQuery.ajax({
+            type: 'POST',          
+            url: '{$form_url}',
+            data: formData,		
+            dataType: 'json',		
+            
+            success: function(data, textStatus){			
+              if (data.redirect) {                            
+                window.location.href = data.redirect;
+              } else {
+                console.log('No data redirect after posting ViaBill Try Payment Form');
+                console.log(data);
+              }
+            },
+            error: function(errMsg) {
+              console.log('Unable to post ViaBill Try Payment Form');
+              console.log(errMsg);			
             }
-          },
-          error: function(errMsg) {
-            console.log('Unable to post ViaBill Try Payment Form');
-            console.log(errMsg);			
-          }
-        }); 
+          }); 
+        }
+
+        jQuery('#viabill-try-payment-form-submit').on('click', postViabillTryPaymentForm);
+        ";
+
+        wc_enqueue_js($inline_script);
+
+        if ($this->settings['auto-redirect'] === 'yes') {
+          $this->enqueue_redirect_js();
+        } else {
+          $this->show_receipt_message();
+        }  
+
+        $executed = true;      
       }
-
-      jQuery('#viabill-try-payment-form-submit').on('click', postViabillTryPaymentForm);
-      ";
-
-      wc_enqueue_js($inline_script);
-
-      if ($this->settings['auto-redirect'] === 'yes') {
-        $this->enqueue_redirect_js();
-      } else {
-        $this->show_receipt_message();
-      }                 
       
     }
 
