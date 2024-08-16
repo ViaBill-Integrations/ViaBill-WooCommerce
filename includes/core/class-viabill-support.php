@@ -80,6 +80,7 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
     public function init() {            
       if ( Viabill_Main::is_merchant_registered() ) {        
         add_action( 'admin_menu', array( $this, 'register_settings_page' ), 200 );        
+        add_action( 'admin_post_reset_viabill_account', array( $this, 'reset_viabill_account' ), 200 );        
       }
     }
 
@@ -151,6 +152,8 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
       
       $action_url = $this->getActionURL();
 
+      $account_reset_url = admin_url('admin-post.php?action=reset_viabill_account');      
+
       ?>    
 
     <div class="wrap">
@@ -203,7 +206,13 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         <div class="form-group">
             <label><?php echo __( 'Store Email', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
-             value="<?php echo sanitize_email($storeEmail); ?>" name="shop_info[email]" />
+             value="<?php echo sanitize_email($storeEmail); ?>" name="shop_info[email]" />             
+        </div>
+        <div class="form-group">
+            <label><?php echo __( 'Api Key', 'viabill');?></label>
+            <input class="form-control" type="text" required="true"
+             value="<?php echo  esc_attr($apiKey); ?>" name="shop_info[apikey]" />
+             <p>Not you? <a href="<?php echo $account_reset_url; ?>">Reset ViaBill Account</a></p>
         </div>
         <div class="form-group">
             <label><?php echo __( 'Eshop Country', 'viabill');?></label>
@@ -358,8 +367,10 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
                 default:
                     $terms_of_use_url = 'https://viabill.com/dk/legal/cooperation-agreement/';
                     break;
-            }                                
-    
+            }    
+
+            $apiKey = get_option( 'viabill_key' );
+
             $params = [
                 'module_version'=>$module_version,
                 'platform_version'=>$platform_version,
@@ -375,7 +386,8 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
                 'storeName'=>$storeName,
                 'storeURL'=>$storeURL,
                 'storeEmail'=>$storeEmail,
-                'storeCountry'=>$storeCountry
+                'storeCountry'=>$storeCountry,
+                'apiKey'=>$apiKey
             ];
         } catch (\Exception $e) {            
             $params['error'] = $e->getMessage();
@@ -563,5 +575,26 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         array( $this, 'show' )
       );
     }
+
+    /**
+     * Clear all ViaBill account details, so the merchant can register/login again
+     * 
+     *  @return void
+     */
+    public function reset_viabill_account() {  
+        $merchant = new Viabill_Merchant_Profile();
+        $merchant->delete_registration_data();
+
+        // Add a success message to the URL
+        $redirect_url = add_query_arg(
+            array(
+                'viabill_success_message' => urlencode('ViaBill account details have been reset successfully.')
+            ),
+            Viabill_Main::get_settings_link()
+        );
+
+        wp_safe_redirect($redirect_url);
+    }
+
   }
 }

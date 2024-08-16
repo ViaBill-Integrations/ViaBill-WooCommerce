@@ -378,23 +378,55 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         'sslverify' => false,
         'timeout' => 60
       );
-        
+
       $data = wp_remote_post($url, $args);
+      $redirect_url = '';
+      $error_msg = ''; 
 
       if (is_wp_error($data)) {        
         $error_msg = $data->get_error_message();    
         $this->logger->log( 'Failed to execute do_checkout_authorize(): '.$error_msg, 'critical' );
-      } else if (is_array($data)) { 
-        $redirect_url = wp_remote_retrieve_header( $data, 'Location' );                
-      }  
-      	
-      if (isset($redirect_url)) {			
-        $response = json_encode(array('redirect'=>$redirect_url, 'error'=>''));
-        exit($response);			
+      }             
+
+      if (is_array($data)) {    
+          $data_str = '';
+          $response_code =  (int) wp_remote_retrieve_response_code($data);
+          if ($response_code == 400) {            
+            $response_message = wp_remote_retrieve_response_message($data);            
+            if (!empty($response_message)) {
+              $error_msg = $response_message;
+            }
+
+            $response_body = wp_remote_retrieve_body($data);
+            if (!empty($response_body)) {
+              $body_data = json_decode($response_body, true);
+              if (is_array($body_data)) {
+                if (isset($body_data['errors'][0]['error'])) {
+                    $error_msg = (empty($error_msg))?$body_data['errors'][0]['error']:$error_msg.' : '.$body_data['errors'][0]['error'];
+                    $this->logger->log('Remote data error detail: ' . $error_detail, 'notice');
+                }
+              }
+            }
+
+            $data_str = print_r($data, true);
+            $data_str = str_replace(array("\r", "\n"), '', $data_str);  // Remove new lines
+            $this->logger->log('Remote data received (Code: ' . $response_code . ', Message: ' . $response_message . '): ' . $data_str, 'notice'); 
+          } else {
+            $redirect_url = wp_remote_retrieve_header( $data, 'Location' );
+          }
+      } else {
+          $data_str = var_export($data, true);
+          $data_str = str_replace(array("\r", "\n"), '', $data_str);  // Remove new lines
+          $this->logger->log('Remote data received (object): ' . $data_str, 'notice');
+      }
+
+      if (isset($redirect_url)) {
+        $response = json_encode(array('redirect'=>$redirect_url, 'error'=>$error_msg));
+        exit($response);
       } else {
         $error_msg = 'Could not perform this checkout operation. Please try again.';
         wp_die($error_msg);
-      }									
+      }
     }
       
     public function headersToArray( $str )

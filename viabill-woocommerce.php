@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.48
+ * Version: 1.1.51
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -37,7 +37,7 @@ if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
 
   function register_compatibility() {
     add_action( 'before_woocommerce_init', 'viabill_hpos_compatibility' );
-    add_action( 'before_woocommerce_init', 'declare_cart_checkout_blocks_compatibility');
+    add_action( 'before_woocommerce_init', 'viabill_declare_cart_checkout_blocks_compatibility');
     add_action( 'woocommerce_blocks_loaded', 'viabill_register_order_approval_payment_method_type');
   }
 
@@ -57,7 +57,7 @@ if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
   /**
    * Custom function to declare compatibility with cart_checkout_blocks feature 
    */
-  function declare_cart_checkout_blocks_compatibility() {				
+  function viabill_declare_cart_checkout_blocks_compatibility() {				
     // Check if the required class exists
     if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
       // Declare compatibility for 'cart_checkout_blocks'
@@ -96,8 +96,6 @@ if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
   }
 
   register_compatibility(); 
-
-
 
 }
 
@@ -366,7 +364,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.48' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.51' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -870,5 +868,3 @@ if ( ! function_exists( 'wkwc_is_wc_order' ) ) {
       return $bool;
   }
 }
-
-register_compatibility();

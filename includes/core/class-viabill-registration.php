@@ -128,8 +128,8 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
           $name = isset( $_POST['viabill-reg-contact-name'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-contact-name'] ) ) : '';
 
           $tax_id = isset( $_POST['viabill-reg-taxid'] ) ? $this->sanitize_tax_id( wp_unslash( $_POST['viabill-reg-taxid'] ), $country ) : '';
-
-          if (($country == 'ES') && (empty($tax_id))) {
+          
+          if (empty($tax_id)) {
             $response = array(
               'success' => false,
               'message' => __( 'Tax ID cannot be empty, or contain an invalid value. Please try again.', 'viabill' ),
@@ -307,6 +307,7 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
                 'type'  => 'text',
                 'value' => '',
                 'class' => 'input-text regular-input',
+                'required' => true,
               )
             );
             ?>

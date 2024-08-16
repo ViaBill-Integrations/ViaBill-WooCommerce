@@ -4,7 +4,7 @@ Tags: viabill, woocommerce, gateway, payment
 Requires at least: 5.0
 Tested up to: 6.5.2
 Requires PHP: 5.6
-Stable tag: 1.1.48
+Stable tag: 1.1.51
 License: GPL v3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -33,8 +33,17 @@ ViaBill - WooCommerce is a plugin that allows you to make payments via ViaBill p
 For more installation options check the [official WordPress documentation](https://wordpress.org/support/article/managing-plugins/#manual-plugin-installation) about installing plugins.
 
 == Changelog ==
+= 1.1.51 =
+* Added the apiKey to the support form, plus a link to reset it.
+
+= 1.1.50 =
+* Better error handling, in case a transaction fails on the server side.
+
+= 1.1.49 =
+* Removed extra register_compatibility function call.
+
 = 1.1.48 =
-* Added support for the WooCommerce Checkout Blocks
+* Added support for the WooCommerce Checkout Blocks.
 
 = 1.1.47 =
 * Restored the default pricetag position, with the optional first: pseudo selector

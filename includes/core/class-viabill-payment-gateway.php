@@ -375,7 +375,6 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       if (is_admin()) {
         return parent::get_title();
       } else {
-
         if ( isset( $this->settings['show_title_as_label'] ) && ! empty( $this->settings['show_title_as_label'] ) ) {
           $display_option = $this->settings['show_title_as_label'];
           if (($display_option == 'show_label_icon') || ($display_option == 'show_label_only')) {
@@ -404,7 +403,19 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      */
     public function admin_options() {
       $notif_count = $this->notices->get_unseen_count();
+
+      if (isset($_GET['viabill_success_message'])) {
+          // Sanitize the message
+          $message = sanitize_text_field(urldecode($_GET['viabill_success_message']));
+
+          // Display the message
+          echo '<div class="notice notice-success is-dismissible">
+                  <p>' . esc_html($message) . '</p>
+                </div>';
+      }
+
       ?>
+
       <h2><?php esc_html_e( 'ViaBill Payment Gateway', 'viabill' ); ?></h2>
       <?php if ( Viabill_Main::is_merchant_registered() ) : ?>
         <table class="form-table">
@@ -1191,6 +1202,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
     public function admin_options() {
       $notif_count = $this->notices->get_unseen_count();
       ?>
+
       <h2><?php esc_html_e( 'ViaBill Try Payment Gateway', 'viabill' ); ?></h2>
       <?php if ( Viabill_Main::is_merchant_registered() ) : ?>
         <table class="form-table">
@@ -1717,7 +1729,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       }
 
       return $phone;
-    }
+    }    
 
   }
 }
