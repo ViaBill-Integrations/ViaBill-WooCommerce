@@ -518,7 +518,26 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
       $transaction = $this->connector->get_unique_transaction_id( $order );      
       $order_amount = number_format($order->get_total(), 2, '.', '');
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
+
+      $success_url = $order->get_checkout_order_received_url();
+      $cancel_url = $order->get_cancel_order_url_raw();
+      $callback_url = $this->api->get_checkout_status_url($this->id);
+
+      // sanity check
+      if (strpos($success_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $success_url = site_url($success_url);
+      }
+      if (strpos($cancel_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $cancel_url = site_url($cancel_url);
+      }
+      if (strpos($callback_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $callback_url = site_url($callback_url);
+      }
+
+      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -541,9 +560,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         'order_number' => $order->get_id(),
         'amount' => $order_amount,
         'currency' => $order->get_currency(),
-        'success_url' => $order->get_checkout_order_received_url(),
-        'cancel_url' => $order->get_cancel_order_url_raw(),        
-        'callback_url' => $this->api->get_checkout_status_url($this->id),
+        'success_url' => $success_url,
+        'cancel_url' => $cancel_url,        
+        'callback_url' => $callback_url,
         'test' => $is_test_mode ? 'true' : 'false',
         'customParams' => $customer_info_json,
         'cartParams' => $cart_info_json,
@@ -555,7 +574,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
       if (!$executed) {      
 
-        $form_url = $this->api->get_checkout_authorize_url($this->id);
+        $form_url = $this->api->get_checkout_authorize_url($this->id);        
 
         ?>      
         <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
@@ -565,9 +584,9 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
           <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
           <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
-          <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
-          <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
-          <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
+          <input type="hidden" name="success_url" value="<?php echo esc_url($success_url); ?>">
+          <input type="hidden" name="cancel_url" value="<?php echo esc_url($cancel_url); ?>">
+          <input type="hidden" name="callback_url" value="<?php echo esc_url($callback_url); ?>">
           <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
           <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
@@ -1304,8 +1323,27 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       }
 
       $transaction = $this->connector->get_unique_transaction_id( $order );
-      $order_amount = number_format($order->get_total(), 2, '.', '');      
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $order->get_checkout_order_received_url() . '#' . $order->get_cancel_order_url_raw() . '#' . $this->merchant->get_secret() );
+      $order_amount = number_format($order->get_total(), 2, '.', ''); 
+      
+      $success_url = $order->get_checkout_order_received_url();
+      $cancel_url = $order->get_cancel_order_url_raw();
+      $callback_url = $this->api->get_checkout_status_url($this->id);
+
+      // sanity check
+      if (strpos($success_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $success_url = site_url($success_url);
+      }
+      if (strpos($cancel_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $cancel_url = site_url($cancel_url);
+      }
+      if (strpos($callback_url, 'http') !== 0) {
+          // Prepend the base URL using WordPress function to get site URL
+          $callback_url = site_url($callback_url);
+      }
+      
+      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -1328,9 +1366,9 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         'order_number' => $order->get_id(),
         'amount' => $order_amount,
         'currency' => $order->get_currency(),
-        'success_url' => $order->get_checkout_order_received_url(),
-        'cancel_url' => $order->get_cancel_order_url_raw(),
-        'callback_url' => $this->api->get_checkout_status_url($this->id),
+        'success_url' => $success_url,
+        'cancel_url' => $cancel_url,
+        'callback_url' => $callback_url,
         'test' => $is_test_mode ? 'true' : 'false',
         'customParams' => $customer_info_json,
         'cartParams' => $cart_info_json,
@@ -1342,7 +1380,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
 
       if (!$executed) {      
       
-        $form_url = $this->api->get_checkout_authorize_url($this->id);
+        $form_url = $this->api->get_checkout_authorize_url($this->id);        
 
         ?>
         <form id="viabill-try-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
@@ -1352,9 +1390,9 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
           <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
           <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
-          <input type="hidden" name="success_url" value="<?php echo esc_url($order->get_checkout_order_received_url()); ?>">
-          <input type="hidden" name="cancel_url" value="<?php echo esc_url($order->get_cancel_order_url_raw()); ?>">
-          <input type="hidden" name="callback_url" value="<?php echo esc_url($this->api->get_checkout_status_url($this->id)); ?>">
+          <input type="hidden" name="success_url" value="<?php echo esc_url($success_url); ?>">
+          <input type="hidden" name="cancel_url" value="<?php echo esc_url($cancel_url); ?>">
+          <input type="hidden" name="callback_url" value="<?php echo esc_url($callback_url); ?>">
           <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
           <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
