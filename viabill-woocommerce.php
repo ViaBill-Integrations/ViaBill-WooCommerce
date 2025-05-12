@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.52
+ * Version: 1.1.53
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -158,7 +158,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'add_settings_link' ) );
 
       add_action( 'admin_enqueue_scripts', array( $this, 'register_admin_script' ) );
-      add_action( 'wp_enqueue_scripts', array( $this, 'register_client_script' ) );
+      add_action( 'wp_enqueue_scripts', array( $this, 'register_client_assets' ) );
       add_action( 'admin_init', array( $this, 'maybe_redirect_to_registration' ) );
       add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 5 );
       add_action( 'admin_init', array( $this, 'check_for_other_viabill_gateways' ), 1 );
@@ -364,7 +364,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.52' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.53' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -601,14 +601,30 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
           'disable_third_party_gateway_url'   => self::get_disable_thrid_party_link()
         )
       );
-    }
+    }    
 
     /**
-     * Register plugin's client JS script.
+     * Register plugin's client CSS and JS scripts.
      */
-    public function register_client_script() {
-      wp_enqueue_script( 'viabill-client-script', VIABILL_DIR_URL . '/assets/js/viabill.js', array( 'jquery' ), VIABILL_PLUGIN_VERSION, true );
+    public function register_client_assets() {
+      // Enqueue CSS
+      wp_enqueue_style(
+          'viabill-client-style',
+          rtrim(VIABILL_DIR_URL, '/') . '/assets/css/viabill.css',
+          array(), // dependencies, e.g. array('woocommerce-layout')
+          VIABILL_PLUGIN_VERSION
+      );
+
+      // Enqueue JS
+      wp_enqueue_script(
+          'viabill-client-script',
+          rtrim(VIABILL_DIR_URL, '/') . '/assets/js/viabill.js',
+          array('jquery'),
+          VIABILL_PLUGIN_VERSION,
+          true
+      );
     }
+
 
     /**
      * Adds the link to the settings page on the plugins WP page.

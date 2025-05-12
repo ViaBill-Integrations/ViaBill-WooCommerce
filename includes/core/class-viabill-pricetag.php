@@ -334,6 +334,8 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       $position              = Viabill_Main::get_gateway_settings( 'pricetag-position-' . $target );
       $position_inplace      = (isset($settings['inplace']))?$settings['inplace']:false;
       $style                 = Viabill_Main::get_gateway_settings( 'pricetag-style-' . $target );      
+      $alignment             = Viabill_Main::get_gateway_settings( 'pricetag-align-' . $target );
+      $width                 = Viabill_Main::get_gateway_settings( 'pricetag-width-' . $target );
       $combination           = self::getValidCountryLanguageCurrencyCombination();
 
       // if no valid combination found, do not display the pricetag
@@ -379,9 +381,30 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         )
       );
       
-      $style_html = (!empty($style)) ? 'style="'.esc_attr($style).'"' : '';  
+      $style_html = (!empty($style)) ? 'style="'.esc_attr($style).'"' : '';
+
+      $alignment_wrapper_class = '';
+      if (!empty($alignment)) {
+        switch ($alignment) {
+            case 'center':
+            case 'right':
+                $alignment_wrapper_class = 'viabill_wrapper_alignment_'.$alignment;                
+                break;
+            default:
+                // Do nothing.
+        }        
+      }
+
+      $width_style = '';
+      if (!empty($width)) {
+        if (empty($alignment_wrapper_class)) {
+          $width_style = '<style>div.viabill-pricetag-wrap div.viabill-pricetag { width:'.$width.';}</style>';
+        } else {
+          $width_style = '<style>div.viabill-pricetag-wrap.'.$alignment_wrapper_class.' div.viabill-pricetag { width:'.$width.';}</style>';
+        }        
+      }
       
-      $html = '<div class="viabill-pricetag-wrap" '.$style_html.'><div '.$product_types_str.' ';
+      $html = $width_style.'<div class="viabill-pricetag-wrap '.$alignment_wrapper_class.'"'.$style_html.'><div '.$product_types_str.' ';
       foreach ($attrs as $attr_name => $attr_value) {
         $html .= 'data-' . esc_attr($attr_name) . '="' . esc_attr($attr_value) . '" ';
       } 

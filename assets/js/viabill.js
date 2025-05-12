@@ -35,8 +35,8 @@ jQuery(document).ready(function( $ ) {
         insert_first = true;
         pricetag_selector = pricetag_selector.replace(":first", "").trim();
       }
-
-      let insert_element = $pricetag.closest('div');
+      
+      let insert_element = $pricetag.closest('.viabill-pricetag-wrap');
       if (insert_after) {
         if (insert_first) {
           $( pricetag_selector ).first().after(insert_element);

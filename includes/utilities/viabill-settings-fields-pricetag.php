@@ -99,6 +99,25 @@ return apply_filters(
       'type'    => 'text',
       'desc'    => __( 'Here you can add your own custom CSS style to the PriceTag wrapper. Please enter CSS properties following this example: "margin-left: 20px; padding: 10px;".', 'viabill' ),
       'default' => '',
+    ),
+    'pricetag-align-product'                  => array(
+      'id'      => 'pricetag-align-product',
+      'name'    => __( 'PriceTag Alignment', 'viabill' ),      
+      'type'    => 'select',      
+      'options' => array(
+        '' => __( 'Default', 'viabill' ),
+        'center' => __( 'Center', 'viabill' ),
+        'right' => __( 'Right', 'viabill' ),        
+      ),
+      'desc'    => __( 'Here you can optionally specify the alignment of the pricetag.', 'viabill' ),
+      'default' => '',
+    ),
+    'pricetag-width-product'                  => array(
+      'id'      => 'pricetag-width-product',
+      'name'    => __( 'PriceTag Width', 'viabill' ),
+      'type'    => 'text',
+      'desc'    => __( 'Here you can optionally specify the width of the pricetag, such as 240px', 'viabill' ),
+      'default' => '',
     ),    
     array(
       'id'   => 'pricetag-product',
@@ -138,6 +157,25 @@ return apply_filters(
       'desc'    => __( 'Here you can add your own custom CSS style to the PriceTag wrapper. Please enter CSS properties following this example: "margin-left: 20px; padding: 10px;".', 'viabill' ),
       'default' => '',
     ),
+    'pricetag-align-cart'                  => array(
+      'id'      => 'pricetag-align-cart',
+      'name'    => __( 'PriceTag Alignment', 'viabill' ),      
+      'type'    => 'select',      
+      'options' => array(
+        '' => __( 'Default', 'viabill' ),
+        'center' => __( 'Center', 'viabill' ),
+        'right' => __( 'Right', 'viabill' ),        
+      ),
+      'desc'    => __( 'Here you can optionally specify the alignment of the pricetag.', 'viabill' ),
+      'default' => '',
+    ),
+    'pricetag-width-cart'                  => array(
+      'id'      => 'pricetag-width-cart',
+      'name'    => __( 'PriceTag Width', 'viabill' ),
+      'type'    => 'text',
+      'desc'    => __( 'Here you can optionally specify the width of the pricetag, such as 240px', 'viabill' ),
+      'default' => '',
+    ),
     array(
       'id'   => 'pricetag-cart',
       'type' => 'sectionend',
@@ -174,6 +212,25 @@ return apply_filters(
       'name'    => __( 'Checkout PriceTag CSS style', 'viabill' ),
       'type'    => 'text',
       'desc'    => __( 'Here you can add your own custom CSS style to the PriceTag wrapper. Please enter CSS properties following this example: "margin-left: 20px; padding: 10px;".', 'viabill' ),
+      'default' => '',
+    ),
+    'pricetag-align-checkout'                  => array(
+      'id'      => 'pricetag-align-checkout',
+      'name'    => __( 'PriceTag Alignment', 'viabill' ),      
+      'type'    => 'select',      
+      'options' => array(
+        '' => __( 'Default', 'viabill' ),
+        'center' => __( 'Center', 'viabill' ),
+        'right' => __( 'Right', 'viabill' ),        
+      ),
+      'desc'    => __( 'Here you can optionally specify the alignment of the pricetag.', 'viabill' ),
+      'default' => '',
+    ),
+    'pricetag-width-checkout'                  => array(
+      'id'      => 'pricetag-width-checkout',
+      'name'    => __( 'PriceTag Width', 'viabill' ),
+      'type'    => 'text',
+      'desc'    => __( 'Here you can optionally specify the width of the pricetag, such as 240px', 'viabill' ),
       'default' => '',
     ),
     array(
