@@ -36,7 +36,7 @@ function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
         break;
   }
 
-  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
+  $icon = '<img class="viabill_logo" style="height: 1rem; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill' ). '" />';
   return $icon;
 }
 
@@ -66,11 +66,60 @@ function get_try_gateway_icon( $string, $arg1 = null, $arg2 = null) {
         break;
   }
 
-  $icon = '<img class="viabill_logo" style="height: 1em; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill - Try before you Buy' ). '" />';
+  $icon = '<img class="viabill_logo" style="height: 1rem; width: auto; margin-left: 7px; float: none;" src="' . esc_url( plugins_url( '/assets/img/' . $logo, dirname( __FILE__ ) . '/../../../'  ) ) . '" alt="' . esc_attr( 'Pay with Viabill - Try before you Buy' ). '" />';
   return $icon;
 }
 
 add_filter( 'viabill_try_gateway_checkout_icon', 'get_try_gateway_icon', 10, 3 );
+
+/**
+ * Check if TBYB payment method is already enabled
+ * In such case, show a warning a keep it enabled.
+ * 
+ */
+function check_if_tbyb_payment_option_is_enabled() {
+  // Check if migration has already been done
+  if (get_option('viabill_try_payment_migrated', false)) {
+      return true;
+  }
+
+  // Get WooCommerce payment gateway settings
+  $wc_settings = get_option('woocommerce_' . VIABILL_TRY_PAYMENT_METHOD_ID . '_settings', array());
+  
+  if (!empty($wc_settings)) {
+      // Get current main gateway settings
+      $main_settings = get_option('woocommerce_' . VIABILL_MONTHLY_PAYMENT_METHOD_ID . '_settings', array());
+      
+      // If Try payment was enabled, enable the main gateway
+      if (isset($wc_settings['enabled']) && $wc_settings['enabled'] === 'yes') {
+         if (isset($main_settings['enabled']) && $main_settings['enabled'] === 'no') {
+          $main_settings['enabled'] = 'yes';
+
+          // Migrate specific settings if they exist
+          $settings_to_migrate = array('title');
+          foreach ($settings_to_migrate as $setting) {
+              if (isset($wc_settings[$setting]) && !empty($wc_settings[$setting])) {
+                  $main_settings[$setting] = $wc_settings[$setting];
+              }
+          }
+
+          // Update main gateway settings
+          update_option('woocommerce_' . VIABILL_MONTHLY_PAYMENT_METHOD_ID . '_settings', $main_settings);
+
+          // Disable TBYB payment
+          $wc_settings['enabled'] = 'no';
+          update_option('woocommerce_' . VIABILL_TRY_PAYMENT_METHOD_ID . '_settings', $wc_settings);
+
+          // Mark migration as complete
+          update_option('viabill_try_payment_migrated', true);
+
+          return true;
+         }          
+      }            
+  }
+
+  return false;
+}
 
 /**
  * Register payment gateway's class as a new method of payment.
@@ -79,28 +128,8 @@ add_filter( 'viabill_try_gateway_checkout_icon', 'get_try_gateway_icon', 10, 3 )
  * @return array
  */
 function viabill_add_gateway( $methods ) {  
-  if (defined('TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION')) {    
-    $include_try_payment_method = TRY_BEFORE_YOU_BUY_SHOW_SETTING_OPTION;    
-    if ($include_try_payment_method) {
-      // check if the option is available in the specific country
-      $country = wc_get_base_location()['country'];
-      if (empty($country)) {
-        $shop_location = get_option( 'woocommerce_default_country' ); 
-        $shop_location = explode(':', $shop_location);
-        $country  = reset($shop_location); 
-      }
-      if (!empty($country)) {
-        $country = strtoupper($country);
-        switch ($country) {
-          case 'ES':
-          case 'SP':
-          case 'SPAIN':
-            $include_try_payment_method = false;
-            break;
-        }
-      }
-    }
-  }
+  // add the tbyb payment method, only if it's enabled already
+  $include_try_payment_method = check_if_tbyb_payment_option_is_enabled();    
   
   $methods[] = 'Viabill_Payment_Gateway';  
   if ($include_try_payment_method) {
@@ -109,6 +138,7 @@ function viabill_add_gateway( $methods ) {
   
   return $methods;
 }
+
 add_filter( 'woocommerce_payment_gateways', 'viabill_add_gateway' );
 
 // ========================================================================

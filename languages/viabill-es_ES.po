@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ViaBill - WooCommerce\n"
 "POT-Creation-Date: 2021-07-28 17:46+0300\n"
-"PO-Revision-Date: 2024-06-17 11:03+0000\n"
+"PO-Revision-Date: 2025-07-10 08:37+0000\n"
 "Last-Translator: \n"
 "Language-Team: Spanish (Spain)\n"
 "Language: es_ES\n"
@@ -209,6 +209,9 @@ msgstr "Selector dinámico del precio de la cesta"
 msgid "Cart dynamic price trigger"
 msgstr "Activador dinámico del precio de la cesta"
 
+msgid "Cart dynamic price trigger delay."
+msgstr "Retardo de activación del PriceTag dinámico del carrito."
+
 #: includes/utilities/viabill-settings-fields-pricetag.php:42
 msgid "Cart page"
 msgstr "Página de la cesta"
@@ -239,6 +242,9 @@ msgstr "Selector dinámico del precio en la finalización de la compra"
 #: includes/utilities/viabill-settings-fields-pricetag.php:156
 msgid "Checkout dynamic price trigger"
 msgstr "Activador dinámico del precio en la finalización de la compra"
+
+msgid "Checkout dynamic price trigger delay."
+msgstr "Retardo de activación del PriceTag dinámico al finalizar la compra."
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:49
 msgid "Checkout page"
@@ -454,6 +460,9 @@ msgstr "Valor de seguridad inválido."
 #: includes/core/class-viabill-order-admin.php:498
 msgid "Invalid order ID, please try again."
 msgstr "ID de pedido inválido, por favor vuelva a intentarlo."
+
+msgid "It is optional, when data-dynamic-price-triggers is set."
+msgstr "Es opcional cuando se configura data-dynamic-price-triggers."
 
 #: includes/utilities/viabill-settings-fields.php:59
 #, php-format

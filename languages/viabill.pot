@@ -982,3 +982,15 @@ msgstr ""
 
 msgid "Tax ID cannot be empty, or contain an invalid value. Please try again."
 msgstr ""
+
+msgid "Cart dynamic price trigger delay."
+msgstr ""
+
+msgid "It is optional, when data-dynamic-price-triggers is set."
+msgstr ""
+
+msgid "Checkout dynamic price trigger delay."
+msgstr ""
+
+msgid "It is optional, when data-dynamic-price-triggers is set."
+msgstr ""

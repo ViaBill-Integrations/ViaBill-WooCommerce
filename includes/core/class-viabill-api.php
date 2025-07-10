@@ -359,7 +359,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $error_msg = null;
 
       //++++++++++++++++++++++++++++++++++++++++
-      $url = 'https://secure.viabill.com/api/checkout-authorize/addon/woocommerce';
+      $url = $this->connector->get_checkout_url();
 
       $method = 'POST';
 

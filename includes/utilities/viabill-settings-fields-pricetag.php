@@ -150,6 +150,13 @@ return apply_filters(
       'desc'    => __( 'A Query selector for the trigger element on the cart page.', 'viabill' ),
       'default' => '',
     ),
+    'pricetag-cart-dynamic-price-trigger-delay'     => array(
+      'id'      => 'pricetag-cart-dynamic-price-trigger-delay',
+      'name'    => __( 'Cart dynamic price trigger delay', 'viabill' ),
+      'type'    => 'text',
+      'desc'    => __( 'It is optional, when data-dynamic-price-triggers is set.', 'viabill' ),
+      'default' => '',
+    ),
     'pricetag-style-cart'                     => array(
       'id'      => 'pricetag-style-cart',
       'name'    => __( 'Cart PriceTag CSS style', 'viabill' ),
@@ -205,6 +212,13 @@ return apply_filters(
       'name'    => __( 'Checkout dynamic price trigger', 'viabill' ),
       'type'    => 'text',
       'desc'    => __( 'A Query selector for the trigger element on the checkout page.', 'viabill' ),
+      'default' => '',
+    ),
+    'pricetag-checkout-dynamic-price-trigger-delay' => array(
+      'id'      => 'pricetag-checkout-dynamic-price-trigger-delay',
+      'name'    => __( 'Checkout dynamic price trigger delay.', 'viabill' ),
+      'type'    => 'text',
+      'desc'    => __( 'It is optional, when data-dynamic-price-triggers is set.', 'viabill' ),
       'default' => '',
     ),
     'pricetag-style-checkout'                 => array(

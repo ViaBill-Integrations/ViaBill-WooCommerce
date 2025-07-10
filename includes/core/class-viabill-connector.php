@@ -77,7 +77,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     }
 
     public function get_checkout_url() {
-      return $this->api_url . '/api/checkout-authorize/addon/woocommerce';
+      return $this->api_url . '/api/checkout-authorize/addon/woocommerce';      
     }
 
     /**

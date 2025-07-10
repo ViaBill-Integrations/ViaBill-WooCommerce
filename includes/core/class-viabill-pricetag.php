@@ -118,8 +118,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
         // Check if payment gateway enabled since PriceTag is displayed in the payment method description.
         if ( ! Viabill_Main::is_payment_gateway_disabled() ) {
           // add_action( 'viabill_pricetag_after_payment_description', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
-          add_action( 'viabill_pricetag_after_monthly_payment_description', array( 'Viabill_Pricetag', 'show_on_monthly_checkout' ) );
-          add_action( 'viabill_pricetag_after_tbyb_payment_description', array( 'Viabill_Pricetag', 'show_on_tbyb_checkout' ) );
+          add_action( 'viabill_pricetag_after_monthly_payment_description', array( 'Viabill_Pricetag', 'show_on_monthly_checkout' ) );          
         } else {
           add_action( 'woocommerce_review_order_before_submit', array( 'Viabill_Pricetag', 'show_on_checkout' ) );
         }
@@ -282,20 +281,59 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
       } else {
         self::show( 'basket', 'cart', $total, $settings );
       }      
-    }
+    }    
 
     /**
-     * Display pricetag on the checkout page.
+     * Display the ViaBill price-tag on the checkout page.
+     *
+     * @param string $payment_method Payment plan to highlight (default: 'monthly').
+     * @param bool   $inplace        If true, render in-place instead of moving it with JS.
      *
      * @return void
      */
-    public static function show_on_checkout($payment_method = 'monthly', $inplace = false) {
-      $settings = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
+    public static function show_on_checkout( $payment_method = 'monthly', $inplace = false ) {
+
+      /* -------------------------------------------------------------
+      * 1. Make sure the WooCommerce cart object is initialised
+      *    (on some AJAX routes it isn’t yet).
+      * ----------------------------------------------------------- */
+      if ( function_exists( 'wc_maybe_load_cart' ) ) {
+        wc_maybe_load_cart();                 // WooCommerce ≥ 6.0 helper
+      }
+
+      /* -------------------------------------------------------------
+      * 2. Load plugin settings and runtime flags
+      * ----------------------------------------------------------- */
+      $settings            = get_option( 'woocommerce_' . VIABILL_PLUGIN_ID . '_settings', array() );
       $settings['inplace'] = $inplace;
 
-      $totals = WC()->cart->get_totals();
-      $total  = isset( $totals['total'] ) ? $totals['total'] : 0;
-      self::show( 'payment', 'checkout', $total, $settings, $payment_method);
+      /* -------------------------------------------------------------
+      * 3. Determine the current order total in the safest way
+      * ----------------------------------------------------------- */
+      $total = 0;
+
+      // Preferred source: the WC_Cart object (if available)
+      if ( function_exists( 'WC' ) && null !== WC() && isset( WC()->cart ) && WC()->cart instanceof WC_Cart ) {
+        $totals = WC()->cart->get_totals();           // returns associative array
+        $total  = isset( $totals['total'] )
+          ? (float) $totals['total']
+          : (float) WC()->cart->get_total( 'edit' ); // fallback for older WC
+      }
+
+      // Fallback: session copy (e.g. during early checkout-fragments AJAX)
+      if ( 0 === $total && function_exists( 'WC' ) && WC()->session ) {
+        $session_totals = WC()->session->get( 'cart_totals', array() );
+        $total          = isset( $session_totals['total'] )
+          ? (float) $session_totals['total']
+          : 0;
+      }
+
+      // Last-resort: leave at zero – JavaScript can update later if needed.
+
+      /* -------------------------------------------------------------
+      * 4. Render the price-tag
+      * ----------------------------------------------------------- */
+      return self::show( 'payment', 'checkout', $total, $settings, $payment_method );
     }
 
     /**
@@ -305,17 +343,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
      */
     public static function show_on_monthly_checkout($inplace = false) {
       $payment_method = 'monthly';
-      self::show_on_checkout($payment_method, $inplace);      
-    }
-
-    /**
-     * Display pricetag on the checkout page for the "Try Before you Buy" method.
-     *
-     * @return void
-     */
-    public static function show_on_tbyb_checkout($inplace = false) {
-      $payment_method = 'tbyb';
-      self::show_on_checkout($payment_method, $inplace);      
+      return self::show_on_checkout($payment_method, $inplace);      
     }
 
     /**
@@ -330,6 +358,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
     public static function show( $view, $target, $price, $settings, $payment_method = null ) {
       $dynamic_price         = 'pricetag-' . $target . '-dynamic-price';
       $dynamic_price_trigger = $dynamic_price . '-trigger';
+      $dynamic_price_trigger_delay = $dynamic_price . '-trigger-delay';
       $position_field        = 'pricetag-position-' . $target;
       $position              = Viabill_Main::get_gateway_settings( 'pricetag-position-' . $target );
       $position_inplace      = (isset($settings['inplace']))?$settings['inplace']:false;
@@ -377,7 +406,8 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
           'country-code'           => $country,
           'language'               => $language,
           'dynamic-price'          => isset( $settings[ $dynamic_price ] ) && ! empty( $settings[ $dynamic_price ] ) ? $settings[ $dynamic_price ] : '',
-          'dynamic-price-triggers' => isset( $settings[ $dynamic_price_trigger ] ) && ! empty( $settings[ $dynamic_price_trigger ] ) ? $settings[ $dynamic_price_trigger ] : '',          
+          'dynamic-price-triggers' => isset( $settings[ $dynamic_price_trigger ] ) && ! empty( $settings[ $dynamic_price_trigger ] ) ? $settings[ $dynamic_price_trigger ] : '',
+          'dynamic-price-trigger-delay' => isset( $settings[ $dynamic_price_trigger_delay ] ) && ! empty( $settings[ $dynamic_price_trigger_delay ] ) ? $settings[ $dynamic_price_trigger_delay ] : '',
         )
       );
       
@@ -411,7 +441,11 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
 
       // If there is a jQuery selector saved for position render the selector and add class via javascript to trigger script.
       if ($position_inplace) {
-        $html .= 'class="viabill-pricetag" ';
+        if (empty($position)) {			  
+          $html .= 'class="viabill-pricetag" ';
+        } else {			  
+          $html .= 'data-append-target="' . esc_attr($position) . '" ';        			  
+        }  
       } else if ( $position ) {
         $html .= 'data-append-target="' . esc_attr($position) . '" ';            
       } else {

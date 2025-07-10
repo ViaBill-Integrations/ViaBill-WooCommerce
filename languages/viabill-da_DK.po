@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ViaBill payment gateway\n"
 "POT-Creation-Date: 2021-07-28 18:13+0300\n"
-"PO-Revision-Date: 2024-06-17 11:06+0000\n"
+"PO-Revision-Date: 2025-07-10 08:35+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
 "Language: da_DK\n"
@@ -191,11 +191,14 @@ msgstr[1] ""
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:111
 msgid "Cart dynamic price selector"
-msgstr "Kurv dynamic price selector"
+msgstr "Dynamisk PriceTag-vælger for indkøbskurv."
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:118
 msgid "Cart dynamic price trigger"
-msgstr "Kurv dynamic price trigger"
+msgstr "Dynamisk PriceTag-trigger for indkøbskurv."
+
+msgid "Cart dynamic price trigger delay."
+msgstr "Dynamisk PriceTag-udløserforsinkelse for indkøbskurv."
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:42
 msgid "Cart page"
@@ -222,11 +225,14 @@ msgstr ""
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:149
 msgid "Checkout dynamic price selector"
-msgstr "Checkout dynamic price trigger"
+msgstr "Dynamisk PriceTag-vælger til kassen."
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:156
 msgid "Checkout dynamic price trigger"
-msgstr "Checkout dynamic price selector"
+msgstr "Dynamisk PriceTag-trigger ved kassen."
+
+msgid "Checkout dynamic price trigger delay."
+msgstr "Dynamisk PriceTag-udløserforsinkelse ved kassen."
 
 #: includes/utilities/viabill-settings-fields-pricetag.php:49
 msgid "Checkout page"
@@ -437,6 +443,9 @@ msgstr "Ugyldig nonce."
 #: includes/core/class-viabill-order-admin.php:498
 msgid "Invalid order ID, please try again."
 msgstr "Ugyldigt ordre ID, prøv venligst igen."
+
+msgid "It is optional, when data-dynamic-price-triggers is set."
+msgstr "Det er valgfrit, når data-dynamic-price-triggers er indstillet."
 
 #: includes/utilities/viabill-settings-fields.php:59
 #, php-format
