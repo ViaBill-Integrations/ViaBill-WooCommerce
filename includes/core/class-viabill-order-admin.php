@@ -664,7 +664,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
           <tr>
             <td class="label"><label for="capture-amount"><?php esc_html_e( 'Capture amount', 'viabill' ); ?>:</label></td>
             <td class="total">
-              <input type="text" id="capture-viabil-amount" name="capture-amount" class="wc_input_price" />
+              <input type="text" id="capture-viabil-amount" name="capture-amount" class="wc_input_price" value="<?php echo $amount_to_capture; ?>" />
               <div class="clear"></div>
             </td>
           </tr>
@@ -673,7 +673,7 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         <div class="refund-actions">
           <?php
           $capture_amount = '<span class="wc-order-capture-amount">' . wc_price(
-            0,
+            $amount_to_capture,
             array(
               'currency' => $order->get_currency(),
             )

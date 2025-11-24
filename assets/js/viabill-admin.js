@@ -358,7 +358,8 @@ jQuery(document).ready(function( $ ) {
 
       if (isViabil && 'yes' === viabillAdminScript.status_capture && 'wc-processing' === status) {
         e.preventDefault();
-        let confirmed = window.confirm(viabillAdminScript.msg_order_status_capture);
+        // let confirmed = window.confirm(viabillAdminScript.msg_order_status_capture);
+        let confirmed = true;
 
         if (confirmed) {
           $('#post').submit();

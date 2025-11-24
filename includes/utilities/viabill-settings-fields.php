@@ -18,6 +18,17 @@ if (!array_key_exists('processing', $order_status_options)) {
   $order_status_options['processing'] = 'Processing';
 }
 
+$this->settings  = Viabill_Main::get_gateway_settings();
+
+$authorized_payment_status = (isset($this->settings['order_status_after_authorized_payment']))?$this->settings['order_status_after_authorized_payment']:'on-hold';
+$authorized_payment_status_label = wc_get_order_status_name( $authorized_payment_status );
+
+$captured_payment_status = (isset($this->settings['order_status_after_captured_payment']))?$this->settings['order_status_after_captured_payment']:'processing';
+$captured_payment_status_label = wc_get_order_status_name( $captured_payment_status );
+
+$auto_capture_switch_description = sprintf(__( 'Select this option to automatically capture all approved ViaBill orders. All automatically captured orders will be updated with an order status of "%s". Selecting this option will also disable the option to partially capture the order amount.', 'viabill' ), $captured_payment_status_label);
+$auto_capture_order_switch_description = sprintf(__( 'Select this option in order to capture the whole order amount by manually switching the order status from, "%s" to "%s".', 'viabill' ), $authorized_payment_status_label, $captured_payment_status_label);
+
 return array(
   'enabled' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'    => __( 'Enable', 'viabill' ),
@@ -102,7 +113,7 @@ return array(
     'title'       => __( 'Auto-capture payments', 'viabill' ),
     'type'        => 'select',
     'class'       => 'wc-enhanced-select',
-    'description' => __( 'Select this option to automatically capture all approved ViaBill orders. All automatically captured orders will be updated with an order status of, "Processing". Selecting this option will also disable the option to partially capture the order amount.', 'viabill' ),
+    'description' => $auto_capture_switch_description,
     'default'     => 'no',
     'options'     => array(
       'no'  => __( 'No', 'viabill' ),
@@ -120,7 +131,7 @@ return array(
     'title'       => __( 'Capture order on status change', 'viabill' ),
     'type'        => 'select',
     'class'       => 'wc-enhanced-select',
-    'description' => __( 'Select this option in order to capture the whole order amount by manually switching the order status from, "On Hold" to "Processing".', 'viabill' ),
+    'description' => $auto_capture_order_switch_description,
     'default'     => 'yes',
     'options'     => array(
       'no'  => __( 'No', 'viabill' ),
