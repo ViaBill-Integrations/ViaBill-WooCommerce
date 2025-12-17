@@ -177,6 +177,17 @@ return array(
       'yes' => __( 'Yes', 'viabill' ),
     ),
   ),
+  'theme' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+      'title'       => __( 'Theme', 'viabill' ),
+      'type'        => 'select',
+      'class'       => 'wc-enhanced-select',
+      'description' => __( 'If enabled, the Viabill payment method will not be available in the checkout step.', 'viabill' ),
+      'default'     => 'light',
+      'options'     => array(
+        'light'  => __( 'Light', 'viabill' ),
+        'dark' => __( 'Dark', 'viabill' ),
+      ),
+  ),
   'update-db' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'       => __( 'Database Update', 'viabill' ),
     'type'        => 'title',

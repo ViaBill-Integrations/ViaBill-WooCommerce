@@ -146,7 +146,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
             }            
             if ($currency != 'USD') {
                $valid = false;
-            } else {              
+            } else {
               $valid = true;
             }            
             break;
@@ -157,7 +157,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
             }
             if ($currency != 'EUR') {
                $valid = false;
-            } else {              
+            } else {   
               $valid = true;
             }
             break;
@@ -168,7 +168,7 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
             }
             if ($currency != 'DKK') {
                $valid = false;
-            } else {              
+            } else {
               $valid = true;
             }
             break;    

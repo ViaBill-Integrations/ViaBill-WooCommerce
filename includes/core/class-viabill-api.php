@@ -403,7 +403,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
               if (is_array($body_data)) {
                 if (isset($body_data['errors'][0]['error'])) {
                     $error_msg = (empty($error_msg))?$body_data['errors'][0]['error']:$error_msg.' : '.$body_data['errors'][0]['error'];
-                    $this->logger->log('Remote data error detail: ' . $error_detail, 'notice');
+                    $this->logger->log('Remote data error detail: ' . $error_msg, 'notice');
                 }
               }
             }

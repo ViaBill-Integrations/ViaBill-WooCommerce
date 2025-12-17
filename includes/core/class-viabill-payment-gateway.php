@@ -27,12 +27,28 @@ function get_gateway_icon( $string, $arg1 = null, $arg2 = null) {
   } elseif ( strlen( $locale ) === 2 ) {
     $language = strtolower($locale);
   }
+
+  $theme = 'light'; // or 'dark'
+  // See if theme has been specified in the payment method settings
+  $main_settings = get_option('woocommerce_' . VIABILL_MONTHLY_PAYMENT_METHOD_ID . '_settings', array());
+  if (!empty($main_settings)) {
+    if (!empty($main_settings['theme'])) {
+      switch ($main_settings['theme']) {
+        case 'light':
+        case 'dark':
+          $theme = $main_settings['theme'];
+          break;
+        default:
+          $theme = 'light';
+      }
+    }
+  }
   
   switch ($language) {
      case 'da':
      case 'es':
      case 'en':
-        $logo = 'ViaBill_Logo_'.$language.'.png';
+        $logo = 'ViaBill_Logo_'.$language.'.'.$theme.'.png';
         break;
   }
 
@@ -606,7 +622,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
         $form_url = $this->api->get_checkout_authorize_url($this->id);        
 
-        ?>      
+        ?> 
         <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
           <input type="hidden" name="protocol" value="3.0">
           <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
@@ -622,21 +638,61 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
           <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-        </form>                      
+        </form>      
 
-        <input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />
         <?php
-
         $inline_script = "
-          window.postViabillPaymentForm = function() {          
-            var formData = jQuery('#viabill-payment-form').serialize();
-            jQuery.ajax({
-              type: 'POST',
-              url: '{$form_url}',
-              data: formData,
-              dataType: 'json',
-
-              success: function(data, textStatus){
+        (function() {                   
+          function serializeForm(formId) {
+            var form = document.getElementById(formId);
+            if (!form) {
+              console.error('Form not found: ' + formId);
+              return '';
+            }
+            
+            var formData = new FormData(form);
+            var params = [];
+            
+            for (var pair of formData.entries()) {
+              params.push(encodeURIComponent(pair[0]) + '=' + encodeURIComponent(pair[1]));
+            }
+            
+            return params.join('&');
+          }
+          
+          function ajaxPost(url, data, successCallback, errorCallback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+            
+            xhr.onload = function() {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  var response = JSON.parse(xhr.responseText);
+                  successCallback(response, xhr.statusText);
+                } catch (e) {
+                  console.error('Failed to parse JSON response:', e);
+                  errorCallback(xhr);
+                }
+              } else {
+                errorCallback(xhr);
+              }
+            };
+            
+            xhr.onerror = function() {
+              errorCallback(xhr);
+            };
+            
+            xhr.send(data);
+          }
+          
+          window.postViabillPaymentForm = function() {
+            var formData = serializeForm('viabill-payment-form');
+            
+            ajaxPost(
+              '{$form_url}',
+              formData,
+              function(data, textStatus) {
                 if (data.redirect) {
                   window.location.href = data.redirect;
                 } else {
@@ -644,27 +700,28 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
                   console.log(data);
                 }
               },
-              error: function(errMsg) {
+              function(errMsg) {
                 console.log('Unable to post ViaBill Payment Form');
                 console.log(errMsg);
               }
-            }); 
-          }      
+            );
+          };
           
-          jQuery('#viabill-payment-form-submit').on('click', postViabillPaymentForm);
-        ";
-        
-        // wp_add_inline_script( 'jquery', '<script>'.$inline_script.'</script>' );
-        wc_enqueue_js($inline_script);
-
+        })();
+        ";        
         if ($this->settings['auto-redirect'] === 'yes') {
-          $this->enqueue_redirect_js();
+          $inline_script .= 'postViabillPaymentForm();';
         } else {
-          $this->show_receipt_message();
+          $inline_script .= '<input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />';
+          if ( isset( $this->settings['receipt-redirect-msg'] ) && ! empty( $this->settings['receipt-redirect-msg'] ) ) {
+            $inline_script .= '<p>' . wptexturize( $this->settings['receipt-redirect-msg'] ) . '</p>';
+          }          
         }
-
-        $executed = true;
-      }
+        add_action('wp_footer', function() use ($inline_script) {
+            echo '<script type="text/javascript" data-cfasync="false">' . $inline_script . '</script>';
+        }, 999);
+        $executed = true;        
+      }      
 
       // 'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();      
     }
