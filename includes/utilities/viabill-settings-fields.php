@@ -181,7 +181,7 @@ return array(
       'title'       => __( 'Theme', 'viabill' ),
       'type'        => 'select',
       'class'       => 'wc-enhanced-select',
-      'description' => __( 'If enabled, the Viabill payment method will not be available in the checkout step.', 'viabill' ),
+      'description' => __( 'Select the text color of the checkout tagline.', 'viabill' ),
       'default'     => 'light',
       'options'     => array(
         'light'  => __( 'Light', 'viabill' ),
