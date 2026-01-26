@@ -49,6 +49,10 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * Class constructor.
      */
     public function __construct() {
+      if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+      }
+      
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-connector.php' );
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
 

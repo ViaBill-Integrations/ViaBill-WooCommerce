@@ -57,6 +57,10 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
      * @param boolean $register_settings_page Defaults to false.
      */
     public function __construct( $register_settings_page = false ) {
+      if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+      }
+      
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-notices.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-connector.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-merchant-profile.php' );

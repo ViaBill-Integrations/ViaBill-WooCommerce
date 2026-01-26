@@ -63,6 +63,10 @@ if ( ! class_exists( 'Viabill_Notices' ) ) {
      * @param boolean $initialize Defaults to false.
      */
     public function __construct( $initialize = false ) {
+      if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+      }
+      
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-connector.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-merchant-profile.php' );
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );

@@ -71,6 +71,10 @@ if ( ! class_exists( 'Viabill_Pricetag' ) ) {
     private $settings;
 
     public function __construct() {
+      if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+      }
+      
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-merchant-profile.php' );
 
       $this->merchant = new Viabill_Merchant_Profile();

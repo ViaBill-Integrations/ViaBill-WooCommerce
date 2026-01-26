@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.57
+ * Version: 1.1.58
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -75,6 +75,9 @@ if ( ! function_exists( 'viabill_is_woocommerce_active' ) ) {
     }
 
     // Include the custom Blocks Checkout class for the Monthly Payments
+    if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
+      define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+    }    
     require_once VIABILL_DIR_PATH . '/includes/utilities/class-viabill-woocommerce-block-checkout.php';		
     add_action(
       'woocommerce_blocks_payment_method_type_registration',
@@ -179,7 +182,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
     /**
      * Load ViaBill Payment Gateway.
      */
-    public function init_payment_gateway() {
+    public function init_payment_gateway() {     
       require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-payment-gateway.php' );
       require_once(VIABILL_DIR_PATH. '/includes/core/class-viabill-order-admin.php' );
 
@@ -338,7 +341,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.57' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.58' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );

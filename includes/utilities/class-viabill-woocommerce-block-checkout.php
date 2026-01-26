@@ -7,6 +7,10 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 
 if ( ! class_exists( 'WC_Viabill_Blocks' ) ) {
 
+    if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+    }
+
     // Load required core and utility classes
     require_once VIABILL_DIR_PATH . '/includes/core/class-viabill-payment-gateway.php';
     require_once VIABILL_DIR_PATH . '/includes/core/class-viabill-order-admin.php';

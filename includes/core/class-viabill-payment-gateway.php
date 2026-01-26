@@ -223,6 +223,10 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      * @param bool $init  Should the class attributes be initialized.
      */
     public function __construct() {
+      if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
+        define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
+      }
+      
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-iso-code-converter.php' );
 
