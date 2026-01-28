@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.58
+ * Version: 1.1.59
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -341,7 +341,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.58' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.59' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -812,11 +812,10 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      * Disable third party payment method with "viabill" name
      *
      * @since 1.1.11
-     */
+     */    
     public static function get_disable_thrid_party_link() {
-      $link = get_site_url(null, 'wp-json/viabill/disable-payment/thirdparty');
-      return $link;
-    }
+        return get_rest_url( null, '/viabill/disable-payment/thirdparty' );
+    } 
 
     /**
      * Check to see if we need to change/update the viabill options,
@@ -837,13 +836,28 @@ register_deactivation_hook( __FILE__, array( 'Viabill_Main', 'deactivate' ) );
 
 add_action( 'plugins_loaded', array( 'Viabill_Main', 'get_instance' ), 0 );
 
-add_action('rest_api_init', function () {
-  register_rest_route( 'viabill', 'disable-payment/thirdparty', array (
-    'methods'  => 'GET',
-    'callback' => array( 'Viabill_Main', 'disable_third_party_payment' ),
-    'permission_callback' => function() { return true; }
-  ));
-});
+add_action( 'rest_api_init', function () {
+    register_rest_route(
+        'viabill',
+        '/disable-payment/thirdparty',
+        array(
+            'methods'  => 'GET',
+            'callback' => array( 'Viabill_Main', 'disable_third_party_payment' ),
+            'permission_callback' => function ( WP_REST_Request $request ) {
+                // Only allow logged-in users who can manage options (admins)
+                if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
+                    return new WP_Error(
+                        'rest_forbidden',
+                        __( 'Sorry, you are not allowed to do this.', 'viabill' ),
+                        array( 'status' => 403 )
+                    );
+                }
+
+                return true;
+            },
+        )
+    );
+} );
 
 if ( ! function_exists( 'wkwc_is_wc_order' ) ) {
   /**
