@@ -60,11 +60,18 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     public function __construct() {
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
-      }
-      
-      require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
+      }            
 
-      $this->settings     = Viabill_Main::get_gateway_settings();
+      // Safely get settings even if Viabill_Main isn't loaded yet  
+      // Safely get settings even if Viabill_Main isn't loaded yet
+      if ( class_exists( 'Viabill_Main' ) ) {
+        $this->settings = Viabill_Main::get_gateway_settings();
+      } else {
+        $plugin_id = defined( 'VIABILL_PLUGIN_ID' ) ? VIABILL_PLUGIN_ID : 'viabill_official';
+        $this->settings = get_option( 'woocommerce_' . $plugin_id . '_settings', array() );
+      }              
+
+      require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
       $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
 
       $this->captured_status = (isset($this->settings['order_status_after_captured_payment']))?$this->settings['order_status_after_captured_payment']:'processing';
@@ -570,7 +577,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       if ( $use_deprecated_id ) { 
         $order_id = $order->get_order_key();
       } else {
-        $order_id = $order->get_id();
+        $order_id = $order->get_order_number();
       }
       
       return $order_id;      

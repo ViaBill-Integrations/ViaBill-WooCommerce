@@ -215,6 +215,14 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
      */
     private $checkout_hide;
 
+    /**
+     * Prevents do_receipt_page from running more than once
+     * per gateway instance within a single request.
+     *
+     * @var bool
+     */
+    private $receipt_page_rendered = false;
+
     private $woocommerce_currency_supported_wp_notice_raised = false;
 
     /**
@@ -547,187 +555,324 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       }
     }
 
-    /**
-     * Trigger actions for 'receipt' page.
-     *
-     * @param int $order_id
-     */
     public function do_receipt_page( $order_id ) {
-      static $executed = false;
 
-      $order = wc_get_order( $order_id );
-      if ( ! $order ) {
-        $this->logger->log( 'Failed to find order ' . $order_id . ' while trying to show receipt page.', 'warning' );
-        return false;
-      }
-
-      if ( ! $order->get_meta( 'viabill_status' ) ) {
-        $order->add_meta_data( 'viabill_status', 'pending', true );
-        $order->save();
-      }
-
-      $transaction = $this->connector->get_unique_transaction_id( $order );      
-      $order_amount = number_format($order->get_total(), 2, '.', '');
-
-      $success_url = $order->get_checkout_order_received_url();
-      $cancel_url = $order->get_cancel_order_url_raw();
-      $callback_url = $this->api->get_checkout_status_url($this->id);
-
-      // sanity check
-      if (strpos($success_url, 'http') !== 0) {
-          // Prepend the base URL using WordPress function to get site URL
-          $success_url = site_url($success_url);
-      }
-      if (strpos($cancel_url, 'http') !== 0) {
-          // Prepend the base URL using WordPress function to get site URL
-          $cancel_url = site_url($cancel_url);
-      }
-      if (strpos($callback_url, 'http') !== 0) {
-          // Prepend the base URL using WordPress function to get site URL
-          $callback_url = site_url($callback_url);
-      }
-
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
-
-      $is_test_mode = 'yes' === $this->settings['in-test-mode'];
-      if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
-        $order->add_order_note( __( 'Order was done in <b>test mode</b>.', 'viabill' ) );
-        $order->add_meta_data( 'in_test_mode', 'yes', true );
-        $order->save();
-      }
-
-      $customer_info = $this->get_customer_info($order);
-      $customer_info_json = (empty($customer_info))?'':json_encode($customer_info);
-
-      $cart_info = $this->get_cart_info($order);
-      $cart_info_json = (empty($cart_info))?'':json_encode($cart_info);
-
-      $tbyb = $this->get_tbyb_flag($this->id);
-      
-      $debug_info = array(
-        'apikey' => $this->merchant->get_key(),
-        'transaction' => $transaction,
-        'order_number' => $order->get_id(),
-        'amount' => $order_amount,
-        'currency' => $order->get_currency(),
-        'success_url' => $success_url,
-        'cancel_url' => $cancel_url,        
-        'callback_url' => $callback_url,
-        'test' => $is_test_mode ? 'true' : 'false',
-        'customParams' => $customer_info_json,
-        'cartParams' => $cart_info_json,
-        'md5check' => $md5check,
-        'tbyb' => $tbyb
-      );
-      $debug_info_str = print_r($debug_info, true);
-      $this->logger->log( $debug_info_str, 'notice');
-
-      if (!$executed) {      
-
-        $form_url = $this->api->get_checkout_authorize_url($this->id);        
-
-        ?> 
-        <form id="viabill-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
-          <input type="hidden" name="protocol" value="3.0">
-          <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
-          <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
-          <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
-          <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
-          <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
-          <input type="hidden" name="success_url" value="<?php echo esc_url($success_url); ?>">
-          <input type="hidden" name="cancel_url" value="<?php echo esc_url($cancel_url); ?>">
-          <input type="hidden" name="callback_url" value="<?php echo esc_url($callback_url); ?>">
-          <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
-          <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-          <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-          <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
-          <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
-        </form>      
-
-        <?php
-        $inline_script = "
-        (function() {                   
-          function serializeForm(formId) {
-            var form = document.getElementById(formId);
-            if (!form) {
-              console.error('Form not found: ' + formId);
-              return '';
-            }
-            
-            var formData = new FormData(form);
-            var params = [];
-            
-            for (var pair of formData.entries()) {
-              params.push(encodeURIComponent(pair[0]) + '=' + encodeURIComponent(pair[1]));
-            }
-            
-            return params.join('&');
-          }
-          
-          function ajaxPost(url, data, successCallback, errorCallback) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', url, true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            
-            xhr.onload = function() {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                  var response = JSON.parse(xhr.responseText);
-                  successCallback(response, xhr.statusText);
-                } catch (e) {
-                  console.error('Failed to parse JSON response:', e);
-                  errorCallback(xhr);
-                }
-              } else {
-                errorCallback(xhr);
-              }
-            };
-            
-            xhr.onerror = function() {
-              errorCallback(xhr);
-            };
-            
-            xhr.send(data);
-          }
-          
-          window.postViabillPaymentForm = function() {
-            var formData = serializeForm('viabill-payment-form');
-            
-            ajaxPost(
-              '{$form_url}',
-              formData,
-              function(data, textStatus) {
-                if (data.redirect) {
-                  window.location.href = data.redirect;
-                } else {
-                  console.log('No data redirect after posting ViaBill Payment Form');
-                  console.log(data);
-                }
-              },
-              function(errMsg) {
-                console.log('Unable to post ViaBill Payment Form');
-                console.log(errMsg);
-              }
-            );
-          };
-          
-        })();
-        ";        
-        if ($this->settings['auto-redirect'] === 'yes') {
-          $inline_script .= 'postViabillPaymentForm();';
-        } else {
-          $inline_script .= '<input type="button" id="viabill-payment-form-submit" value="Submit" onclick="postViabillPaymentForm()" />';
-          if ( isset( $this->settings['receipt-redirect-msg'] ) && ! empty( $this->settings['receipt-redirect-msg'] ) ) {
-            $inline_script .= '<p>' . wptexturize( $this->settings['receipt-redirect-msg'] ) . '</p>';
-          }          
+        // ── Instance-level execution guard ───────────────────────────────────
+        if ( ! empty( $this->receipt_page_rendered ) ) {
+            return;
         }
-        add_action('wp_footer', function() use ($inline_script) {
-            echo '<script type="text/javascript" data-cfasync="false">' . $inline_script . '</script>';
-        }, 999);
-        $executed = true;        
-      }      
 
-      // 'yes' === $this->settings['auto-redirect'] ? $this->enqueue_redirect_js() : $this->show_receipt_message();      
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+            $this->logger->log(
+                'Failed to find order ' . $order_id . ' while trying to show receipt page.',
+                'warning'
+            );
+            return false;
+        }
+
+        // ── Guard: ensure this gateway actually owns the order ───────────────
+        if ( $order->get_payment_method() !== $this->id ) {
+            $this->logger->log(
+                'Payment method mismatch for order ' . $order_id .
+                '. Expected: ' . $this->id .
+                ', got: ' . $order->get_payment_method(),
+                'warning'
+            );
+            return false;
+        }
+
+        // ── Order meta ───────────────────────────────────────────────────────
+        if ( ! $order->get_meta( 'viabill_status' ) ) {
+            $order->add_meta_data( 'viabill_status', 'pending', true );
+            $order->save();
+        }
+
+        // ── Build payment parameters ─────────────────────────────────────────
+        $transaction   = $this->connector->get_unique_transaction_id( $order );
+        $order_amount  = number_format( $order->get_total(), 2, '.', '' );
+
+        $success_url  = $order->get_checkout_order_received_url();
+        $cancel_url   = $order->get_cancel_order_url_raw();
+        $callback_url = $this->api->get_checkout_status_url( $this->id );
+
+        foreach ( array( &$success_url, &$cancel_url, &$callback_url ) as &$url ) {
+            if ( strpos( $url, 'http' ) !== 0 ) {
+                $url = site_url( $url );
+            }
+        }
+        unset( $url );
+
+        $md5check = md5(
+            $this->merchant->get_key() . '#' .
+            $order_amount . '#' .
+            $order->get_currency() . '#' .
+            $transaction . '#' .
+            $order->get_id() . '#' .
+            $success_url . '#' .
+            $cancel_url . '#' .
+            $this->merchant->get_secret()
+        );
+
+        $is_test_mode = ( 'yes' === $this->settings['in-test-mode'] );
+        if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
+            $order->add_order_note( __( 'Order was done in <b>test mode</b>.', 'viabill' ) );
+            $order->add_meta_data( 'in_test_mode', 'yes', true );
+            $order->save();
+        }
+
+        $customer_info      = $this->get_customer_info( $order );
+        $customer_info_json = empty( $customer_info ) ? '' : json_encode( $customer_info );
+
+        $cart_info      = $this->get_cart_info( $order );
+        $cart_info_json = empty( $cart_info ) ? '' : json_encode( $cart_info );
+
+        $tbyb = $this->get_tbyb_flag( $this->id );
+
+        // ── Debug log ────────────────────────────────────────────────────────
+        $this->logger->log( print_r( array(
+            'apikey'       => $this->merchant->get_key(),
+            'transaction'  => $transaction,
+            'order_number' => $order->get_id(),
+            'amount'       => $order_amount,
+            'currency'     => $order->get_currency(),
+            'success_url'  => $success_url,
+            'cancel_url'   => $cancel_url,
+            'callback_url' => $callback_url,
+            'test'         => $is_test_mode ? 'true' : 'false',
+            'customParams' => $customer_info_json,
+            'cartParams'   => $cart_info_json,
+            'md5check'     => $md5check,
+            'tbyb'         => $tbyb,
+        ), true ), 'notice' );
+
+        // ── Mark as rendered ─────────────────────────────────────────────────
+        $this->receipt_page_rendered = true;
+
+        // ── Build JS fields payload ───────────────────────────────────────────
+        $form_url = $this->api->get_checkout_authorize_url( $this->id );
+
+        $js_fields = json_encode( array(
+            'protocol'     => '3.0',
+            'apikey'       => $this->merchant->get_key(),
+            'transaction'  => $transaction,
+            'order_number' => (string) $order->get_id(),
+            'amount'       => $order_amount,
+            'currency'     => $order->get_currency(),
+            'success_url'  => $success_url,
+            'cancel_url'   => $cancel_url,
+            'callback_url' => $callback_url,
+            'test'         => $is_test_mode ? 'true' : 'false',
+            'customParams' => $customer_info_json,
+            'cartParams'   => $cart_info_json,
+            'md5check'     => $md5check,
+            'tbyb'         => $tbyb ? '1' : '0',
+        ) );
+
+        $auto_redirect = ( 'yes' === $this->settings['auto-redirect'] );
+
+        $redirect_msg = '';
+        if ( ! $auto_redirect && ! empty( $this->settings['receipt-redirect-msg'] ) ) {
+            $redirect_msg = '<p id="viabill-redirect-msg">' .
+                wptexturize( $this->settings['receipt-redirect-msg'] ) . '</p>';
+        }
+
+        // ── Inline JS ─────────────────────────────────────────────────────────
+        $inline_script = "
+        (function() {
+            var FORM_ID   = 'viabill-payment-form';
+            var BUTTON_ID = 'viabill-payment-form-submit';
+            var fields    = {$js_fields};
+
+            function ensureForm() {
+                var form = document.getElementById(FORM_ID);
+                if (form) return form;
+
+                console.warn('[ViaBill] Form not found in DOM — creating programmatically.');
+
+                form = document.createElement('form');
+                form.id     = FORM_ID;
+                form.action = '" . esc_js( $this->connector->get_checkout_url() ) . "';
+                form.method = 'post';
+                form.style.display = 'none';
+
+                for (var name in fields) {
+                    if (!fields.hasOwnProperty(name)) continue;
+                    var input   = document.createElement('input');
+                    input.type  = 'hidden';
+                    input.name  = name;
+                    input.value = fields[name];
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                return form;
+            }
+
+            function ensureButton() {
+                if (document.getElementById(BUTTON_ID)) return;
+
+                console.warn('[ViaBill] Submit button not found in DOM — creating programmatically.');
+
+                var btn     = document.createElement('input');
+                btn.type    = 'button';
+                btn.id      = BUTTON_ID;
+                btn.value   = 'Submit';
+                btn.onclick = postViabillPaymentForm;
+
+                var form   = document.getElementById(FORM_ID);
+                var ref    = form ? form.nextSibling : null;
+                var parent = form ? form.parentNode  : document.body;
+                parent.insertBefore(btn, ref);
+            }
+
+            function serializeForm(formId) {
+                var form = document.getElementById(formId);
+                if (!form) {
+                    console.error('[ViaBill] Form not found: ' + formId);
+                    return '';
+                }
+                var formData = new FormData(form);
+                var params   = [];
+                for (var pair of formData.entries()) {
+                    params.push(encodeURIComponent(pair[0]) + '=' + encodeURIComponent(pair[1]));
+                }
+                return params.join('&');
+            }
+
+            function ajaxPost(url, data, successCallback, errorCallback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            successCallback(response, xhr.statusText);
+                        } catch (e) {
+                            console.error('[ViaBill] Failed to parse JSON response:', e);
+                            errorCallback(xhr);
+                        }
+                    } else {
+                        errorCallback(xhr);
+                    }
+                };
+                xhr.onerror = function() { errorCallback(xhr); };
+                xhr.send(data);
+            }
+
+            window.postViabillPaymentForm = function() {
+                ensureForm();
+                var formData = serializeForm(FORM_ID);
+                ajaxPost(
+                    '" . esc_js( $form_url ) . "',
+                    formData,
+                    function(data) {
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else {
+                            console.warn('[ViaBill] No redirect URL in response.', data);
+                        }
+                    },
+                    function(err) {
+                        console.error('[ViaBill] Unable to post payment form.', err);
+                    }
+                );
+            };
+
+            function init() {
+                ensureForm();
+        ";
+
+        if ( $auto_redirect ) {
+            $inline_script .= "
+                postViabillPaymentForm();
+            ";
+        } else {
+            $inline_script .= "
+                ensureButton();
+            ";
+        }
+
+        $inline_script .= "
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+        ";
+
+        // ── Output strategy (layered fallback) ────────────────────────────────
+        //
+        // Priority 1: wp_footer hook (standard WP themes / shortcode checkout).
+        //
+        // Priority 2: wp_add_inline_script attached to an already-enqueued handle
+        //             — safe for block-based checkout pages or themes where
+        //             ob_start captures echo output inside wp_footer hooks.
+        //
+        // Priority 3: Direct echo with ob flush — last resort for environments
+        //             where neither wp_footer nor the enqueue system is reliable.
+        //
+        // The ob_get_level() diagnostic log helps trace buffering issues via
+        // the site debug.log without surfacing anything to the visitor.
+
+        $this->logger->log(
+            '[ViaBill] do_receipt_page output strategy — ob_get_level: ' . ob_get_level(),
+            'debug'
+        );
+
+        $script_tag    = '<script type="text/javascript" data-cfasync="false">' . $inline_script . '</script>';
+        $full_html_out = ( ! empty( $redirect_msg ) ? $redirect_msg : '' ) . $script_tag;
+
+        if ( did_action( 'wp_footer' ) === 0 ) {
+            // wp_footer has NOT yet fired — register normally.
+            add_action(
+                'wp_footer',
+                function() use ( $full_html_out ) {
+                    // Flush any open output buffer opened by themes/plugins
+                    // (e.g. ob_start in Divi/Avada/page-builder templates)
+                    // so our echo actually reaches the response stream.
+                    while ( ob_get_level() > 0 && ob_get_length() !== false ) {
+                        if ( ! @ob_end_flush() ) {
+                            break;
+                        }
+                    }
+                    echo $full_html_out; // phpcs:ignore WordPress.Security.EscapeOutput
+                },
+                999
+            );
+        } else {
+            // wp_footer has already fired (block checkout, custom template, etc.).
+            // Attempt wp_add_inline_script first — cleaner, avoids ob issues.
+            $enqueued_handle = '';
+            foreach ( array( 'wc-checkout', 'jquery', 'wp-blocks' ) as $handle ) {
+                if ( wp_script_is( $handle, 'enqueued' ) || wp_script_is( $handle, 'done' ) ) {
+                    $enqueued_handle = $handle;
+                    break;
+                }
+            }
+
+            if ( ! empty( $enqueued_handle ) ) {
+                wp_add_inline_script( $enqueued_handle, $inline_script );
+                if ( ! empty( $redirect_msg ) ) {
+                    // Redirect message must be echoed directly since
+                    // wp_add_inline_script cannot inject arbitrary HTML.
+                    echo $redirect_msg; // phpcs:ignore WordPress.Security.EscapeOutput
+                }
+            } else {
+                // Last resort: echo directly, flushing any open buffers first.
+                while ( ob_get_level() > 0 && ob_get_length() !== false ) {
+                    if ( ! @ob_end_flush() ) {
+                        break;
+                    }
+                }
+                echo $full_html_out; // phpcs:ignore WordPress.Security.EscapeOutput
+            }
+        }
     }
 
     /**
