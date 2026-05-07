@@ -322,7 +322,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
         'currency' => $order->get_currency(),
       );
 
-      $body['signature'] = md5( $body['id'] . '#' . $body['apikey'] . '#' . $body['amount'] . '#' . $body['currency'] . '#' . get_option( 'viabill_secret', '' ) );
+      $body['signature'] = hash( 'sha256', $body['id'] . '#' . $body['apikey'] . '#' . $body['amount'] . '#' . $body['currency'] . '#' . get_option( 'viabill_secret', '' ) );
 
       $args = $this->get_default_args( $body );
       if ( ! $args ) {
@@ -408,7 +408,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
         'currency' => $currency,
       );
 
-      $body['signature'] = md5( $body['id'] . '#' . $body['apikey'] . '#' . $body['amount'] . '#' . $body['currency'] . '#' . get_option( 'viabill_secret', '' ) );
+      $body['signature'] = hash( 'sha256', $body['id'] . '#' . $body['apikey'] . '#' . $body['amount'] . '#' . $body['currency'] . '#' . get_option( 'viabill_secret', '' ) );
 
       $args     = $this->get_default_args( $body );
       $response = wp_remote_post( $this->api_url . '/api/transaction/refund', $args );
@@ -470,7 +470,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
       $secret = get_option( 'viabill_secret', '' );
 
-      $body['signature'] = md5( $body['id'] . '#' . $body['apikey'] . '#' . $secret );
+      $body['signature'] = hash( 'sha256', $body['id'] . '#' . $body['apikey'] . '#' . $secret );
 
       $args = $this->get_default_args( $body );
 
@@ -513,7 +513,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       $secret         = get_option( 'viabill_secret', '' );
       $api_key        = get_option( 'viabill_key', '' );
       $transaction_id = $this->get_unique_transaction_id( $order, $use_deprecated_id );
-      $signature      = md5( $transaction_id . '#' . $api_key . '#' . $secret );
+      $signature      = hash( 'sha256', $transaction_id . '#' . $api_key . '#' . $secret );
 
       $params = '?id=' . $transaction_id . '&apikey=' . $api_key . '&signature=' . $signature;
 
@@ -644,7 +644,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       $secret = empty( $secret ) ? get_option( 'viabill_secret' ) : $secret;
 
       if ( $key && is_string( $key ) && $secret && is_string( $secret ) ) {
-        return md5( $key . '#' . $secret );
+        return hash( 'sha256', $key . '#' . $secret );
       } else {
         $this->logger->log( 'Failed to generate signature.', 'critical' );
         return false;

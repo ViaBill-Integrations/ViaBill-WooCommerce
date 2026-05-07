@@ -603,18 +603,32 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         }
         unset( $url );
 
-        $md5check = md5(
-            $this->merchant->get_key() . '#' .
-            $order_amount . '#' .
-            $order->get_currency() . '#' .
-            $transaction . '#' .
-            $order->get_id() . '#' .
-            $success_url . '#' .
-            $cancel_url . '#' .
-            $this->merchant->get_secret()
-        );
-
         $is_test_mode = ( 'yes' === $this->settings['in-test-mode'] );
+
+        if ($is_test_mode) {
+          $sha256check = hash( 'sha256', 
+              $this->merchant->get_key() . '#' .
+              $order_amount . '#' .
+              $order->get_currency() . '#' .
+              $transaction . '#' .
+              $order->get_id() . '#' .
+              $success_url . '#' .
+              $cancel_url . '#' .
+              $this->merchant->get_secret() . '#true'
+          );
+        } else {
+          $sha256check = hash( 'sha256', 
+              $this->merchant->get_key() . '#' .
+              $order_amount . '#' .
+              $order->get_currency() . '#' .
+              $transaction . '#' .
+              $order->get_id() . '#' .
+              $success_url . '#' .
+              $cancel_url . '#' .
+              $this->merchant->get_secret()
+          );
+        }        
+        
         if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
             $order->add_order_note( __( 'Order was done in <b>test mode</b>.', 'viabill' ) );
             $order->add_meta_data( 'in_test_mode', 'yes', true );
@@ -642,7 +656,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             'test'         => $is_test_mode ? 'true' : 'false',
             'customParams' => $customer_info_json,
             'cartParams'   => $cart_info_json,
-            'md5check'     => $md5check,
+            'sha256check'     => $sha256check,
             'tbyb'         => $tbyb,
         ), true ), 'notice' );
 
@@ -653,7 +667,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         $form_url = $this->api->get_checkout_authorize_url( $this->id );
 
         $js_fields = json_encode( array(
-            'protocol'     => '3.0',
+            'protocol'     => '3.1',
             'apikey'       => $this->merchant->get_key(),
             'transaction'  => $transaction,
             'order_number' => (string) $order->get_id(),
@@ -665,7 +679,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             'test'         => $is_test_mode ? 'true' : 'false',
             'customParams' => $customer_info_json,
             'cartParams'   => $cart_info_json,
-            'md5check'     => $md5check,
+            'sha256check'     => $sha256check,
             'tbyb'         => $tbyb ? '1' : '0',
         ) );
 
@@ -1579,7 +1593,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           $callback_url = site_url($callback_url);
       }
       
-      $md5check    = md5( $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
+      $sha256check    = hash( 'sha256', $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -1608,7 +1622,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
         'test' => $is_test_mode ? 'true' : 'false',
         'customParams' => $customer_info_json,
         'cartParams' => $cart_info_json,
-        'md5check' => $md5check,
+        'sha256check' => $sha256check,
         'tbyb' => $tbyb
       );
       $debug_info_str = print_r($debug_info, true);
@@ -1620,7 +1634,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
 
         ?>
         <form id="viabill-try-payment-form" action="<?php echo esc_url($this->connector->get_checkout_url()); ?>" method="post">
-          <input type="hidden" name="protocol" value="3.0">
+          <input type="hidden" name="protocol" value="3.1">
           <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
           <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
           <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
@@ -1632,7 +1646,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           <input type="hidden" name="test" value="<?php echo $is_test_mode ? 'true' : 'false'; ?>">
           <input type="hidden" name="customParams" value="<?php echo htmlspecialchars($customer_info_json, ENT_QUOTES, 'UTF-8'); ?>">
           <input type="hidden" name="cartParams" value="<?php echo htmlspecialchars($cart_info_json, ENT_QUOTES, 'UTF-8'); ?>">
-          <input type="hidden" name="md5check" value="<?php echo esc_attr($md5check); ?>">
+          <input type="hidden" name="sha256check" value="<?php echo esc_attr($sha256check); ?>">
           <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
         </form> 
 

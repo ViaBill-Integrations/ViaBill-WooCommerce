@@ -147,7 +147,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $signature_p1 = $transaction_id . '#' . $order_number . '#' . number_format($order_amount, 2, '.', '') . '#' . $order->get_currency();
       $signature_p2 = $params['status'] . '#' . $params['time'] . '#' . get_option( 'viabill_secret', '' );
 
-      $local_signature = md5( $signature_p1 . '#' . $signature_p2 );
+      $local_signature = hash( 'sha256', $signature_p1 . '#' . $signature_p2 );      
       $is_match        = $local_signature === $params['signature'];
 
       if ( ! $is_match && ! $use_deprecated_id ) {
@@ -312,7 +312,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         "test" => "",
         "customParams" => "",
         "cartParams" => "",
-        "md5check" => "",
+        "sha256check" => "",
         "tbyb" => "",
       ];			
 
