@@ -144,7 +144,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $order_number   = $this->connector->get_order_number( $order, $use_deprecated_id );
       $order_amount   = $order->get_total();
 
-      $signature_p1 = $transaction_id . '#' . $order_number . '#' . number_format($order_amount, 2, '.', '') . '#' . $order->get_currency();
+      $signature_p1 = $transaction_id . '#' . $order_number . '#' . $this->format_amount($order_amount) . '#' . $order->get_currency();
       $signature_p2 = $params['status'] . '#' . $params['time'] . '#' . get_option( 'viabill_secret', '' );
 
       $local_signature = hash( 'sha256', $signature_p1 . '#' . $signature_p2 );      
@@ -462,6 +462,16 @@ if ( ! class_exists( 'Viabill_API' ) ) {
     public function get_checkout_authorize_url($payment_method_id = null) {
       if (empty($payment_method_id)) $payment_method_id = VIABILL_MONTHLY_PAYMENT_METHOD_ID;
       return WC()->api_request_url( $payment_method_id . '_checkout_authorize');
+    }
+
+    /**
+     * Format amount.
+     *
+     * @param  float $amount
+     * @return string        Formated amount to string with 2 decimal places.
+     */
+    public function format_amount( $amount ) {
+      return wc_format_decimal( $amount, 2 );
     }
 
   }

@@ -31,7 +31,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      *
      * @var Viabill_Logger
      */
-    private $logger;
+    private $logger;    
 
     /**
      * Contains all the payment gateway settings values.
@@ -60,16 +60,15 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     public function __construct() {
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {	
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
-      }            
-
-      // Safely get settings even if Viabill_Main isn't loaded yet  
+      }           
+                  
       // Safely get settings even if Viabill_Main isn't loaded yet
       if ( class_exists( 'Viabill_Main' ) ) {
-        $this->settings = Viabill_Main::get_gateway_settings();
+        $this->settings = Viabill_Main::get_gateway_settings();        
       } else {
         $plugin_id = defined( 'VIABILL_PLUGIN_ID' ) ? VIABILL_PLUGIN_ID : 'viabill_official';
-        $this->settings = get_option( 'woocommerce_' . $plugin_id . '_settings', array() );
-      }              
+        $this->settings = get_option( 'woocommerce_' . $plugin_id . '_settings', array() );        
+      }                    
 
       require_once( VIABILL_DIR_PATH . '/includes/utilities/class-viabill-logger.php' );
       $this->logger = new Viabill_Logger( isset( $this->settings['use-logger'] ) && 'yes' === $this->settings['use-logger'] );
@@ -280,9 +279,9 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @return array                       [ 'success' => bool, 'message' => string ]
      */
     public function capture( $order, $amount_to_capture = 0, $use_deprecated_id = false ) {
-
+      
       if (!$this->is_viabill_payment($order->get_payment_method())) {
-        $this->logger->log( 'Request to capture order ' . $order->get_id() . ' failed, wrong payment method', 'notice' );
+        $this->logger->log( 'Request to capture order ' . $this->get_order_number($order) . ' failed, wrong payment method', 'notice' );
         return array(
           'success' => false,
           'message' => __( 'Payment method is not ViaBill.', 'viabill' ),
@@ -295,7 +294,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
       if ( $amount_to_capture > 0 ) {
         if ( round( $amount_to_capture, 2 ) > round( $available_amount, 2 ) ) {
-          $this->logger->log( 'Tried to capture order with ID ' . $order->get_id() . ' where available amount is greater than the remaining amount available to capture.', 'notice' );
+          $this->logger->log( 'Tried to capture order with ID ' . $this->get_order_number($order) . ' where available amount is greater than the remaining amount available to capture.', 'notice' );
           return array(
             'success' => false,
             'message' => __( 'Tried to capture order where available amount is greater than the remaining amount available to capture.', 'viabill' ),
@@ -308,7 +307,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       }
 
       if ( $amount <= 0 ) {
-        $this->logger->log( 'Tried to capture order ' . $order->get_id() . ' where available amount is less or equal to 0.', 'notice' );
+        $this->logger->log( 'Tried to capture order ' . $this->get_order_number($order) . ' where available amount is less or equal to 0.', 'notice' );
         return array(
           'success' => false,
           'message' => __( 'Tried to capture order where available amount is less or equal to 0.', 'viabill' ),
@@ -334,7 +333,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       }
 
       $response = wp_remote_post( $this->api_url . '/api/transaction/capture', $args );
-      $this->logger->log( 'Request to capture (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway sent for order ' . $order->get_id(), 'notice' );
+      $this->logger->log( 'Request to capture (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway sent for order ' . $this->get_order_number($order), 'notice' );
 
       $status_code = $this->get_response_status_code( $response );
       $is_success  = $status_code && ( $status_code >= 200 && $status_code < 300 );
@@ -347,7 +346,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       $response_body = $this->get_response_body( $response, '/api/transaction/capture', '' );
 
       if ( $is_success ) {
-        $this->logger->log( 'Successfully captured (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $order->get_id(), 'notice' );
+        $this->logger->log( 'Successfully captured (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $this->get_order_number($order), 'notice' );
         $note = sprintf( __( 'Captured %s via ViaBill payment gateway', 'viabill' ), wc_price( $amount ) );
 
         $amount_captured += $amount;
@@ -373,7 +372,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
             $this->logger->log( $error_data['error'], 'error' );
           }
         }
-        $this->logger->log( 'Failed to capture (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $order->get_id(), 'error' );
+        $this->logger->log( 'Failed to capture (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $this->get_order_number($order), 'error' );
         $response_body = __( 'Failed to process capture.', 'viabill' );
       }
 
@@ -412,7 +411,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
       $args     = $this->get_default_args( $body );
       $response = wp_remote_post( $this->api_url . '/api/transaction/refund', $args );
-      $this->logger->log( 'Request to refund (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway sent for order ' . $order->get_id(), 'notice' );
+      $this->logger->log( 'Request to refund (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway sent for order ' . $this->get_order_number($order), 'notice' );
 
       $status_code = $this->get_response_status_code( $response );
       $is_success  = $status_code && ( $status_code >= 200 && $status_code < 300 );
@@ -420,7 +419,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
       if ( $is_success ) {
         $note = sprintf( __( 'Successfully refunded %s via ViaBill payment gateway', 'viabill' ), $wc_price );
-        $this->logger->log( 'Successfully refunded (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $order->get_id(), 'notice' );
+        $this->logger->log( 'Successfully refunded (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $this->get_order_number($order), 'notice' );
         $order->add_order_note( $note );
         $order->update_meta_data( 'viabill_status', (int) $order->get_remaining_refund_amount() ? 'refunded_partially' : 'refunded' );
         $order->save();
@@ -432,7 +431,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
         return $this->refund( $order, $amount, $currency, true );
       } else {
         $note = sprintf( __( 'Failed to refund %s via ViaBill payment gateway', 'viabill' ), $wc_price );
-        $this->logger->log( 'Failed to refund (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $order->get_id(), 'error' );
+        $this->logger->log( 'Failed to refund (' . $amount . ' ' . $order->get_currency() . ') via ViaBill payment gateway for order ' . $this->get_order_number($order), 'error' );
         $order->add_order_note( $note );
         $response_body = $this->get_response_body( $response, '/api/transaction/refund', '' );
 
@@ -456,7 +455,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      */
     public function cancel( $order, $use_deprecated_id = false ) {
       if (!$this->is_viabill_payment($order->get_payment_method())) {
-        $this->logger->log( 'Request to cancel order ' . $order->get_id() . ' failed, wrong payment method', 'notice' );
+        $this->logger->log( 'Request to cancel order ' . $this->get_order_number($order) . ' failed, wrong payment method', 'notice' );
         return array(
           'success' => false,
           'message' => __( 'Payment method is not ViaBill.', 'viabill' ),
@@ -483,7 +482,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       }
 
       $response = wp_remote_post( $this->api_url . '/api/transaction/cancel', $args );
-      $this->logger->log( 'Request to cancel order ' . $order->get_id() . ' via ViaBill payment gateway sent.', 'notice' );
+      $this->logger->log( 'Request to cancel order ' . $this->get_order_number($order) . ' via ViaBill payment gateway sent.', 'notice' );
 
       $status_code = $this->get_response_status_code( $response );
       $is_success  = $status_code && ( $status_code >= 200 && $status_code < 300 );
@@ -520,7 +519,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
       $response = wp_remote_get( $this->api_url . '/api/transaction/status' . $params );
 
       if ( is_wp_error( $response ) ) {
-        $this->logger->log( 'Failed to fetch status for order ' . $order->get_id() . '. Error message: ' . $response->get_error_message(), 'error' );
+        $this->logger->log( 'Failed to fetch status for order ' . $this->get_order_number($order) . '. Error message: ' . $response->get_error_message(), 'error' );
         return null;
       }
 
@@ -575,7 +574,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
     public function get_order_number($order, $use_deprecated_id = false ) {
       if ( $use_deprecated_id ) { 
-        $order_id = $order->get_order_key();
+        $order_id = $order->get_id();        
       } else {
         $order_id = $order->get_order_number();
       }

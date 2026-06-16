@@ -590,7 +590,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
 
         // ── Build payment parameters ─────────────────────────────────────────
         $transaction   = $this->connector->get_unique_transaction_id( $order );
-        $order_amount  = number_format( $order->get_total(), 2, '.', '' );
+        $order_amount  = $this->format_amount($order->get_total());        
+        $order_number = $this->connector->get_order_number( $order );
 
         $success_url  = $order->get_checkout_order_received_url();
         $cancel_url   = $order->get_cancel_order_url_raw();
@@ -611,7 +612,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
               $order_amount . '#' .
               $order->get_currency() . '#' .
               $transaction . '#' .
-              $order->get_id() . '#' .
+              $order_number . '#' .
               $success_url . '#' .
               $cancel_url . '#' .
               $this->merchant->get_secret() . '#true'
@@ -622,7 +623,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
               $order_amount . '#' .
               $order->get_currency() . '#' .
               $transaction . '#' .
-              $order->get_id() . '#' .
+              $order_number . '#' .
               $success_url . '#' .
               $cancel_url . '#' .
               $this->merchant->get_secret()
@@ -647,7 +648,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         $this->logger->log( print_r( array(
             'apikey'       => $this->merchant->get_key(),
             'transaction'  => $transaction,
-            'order_number' => $order->get_id(),
+            'order_number' => $order_number,
             'amount'       => $order_amount,
             'currency'     => $order->get_currency(),
             'success_url'  => $success_url,
@@ -670,7 +671,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             'protocol'     => '3.1',
             'apikey'       => $this->merchant->get_key(),
             'transaction'  => $transaction,
-            'order_number' => (string) $order->get_id(),
+            'order_number' => (string) $order_number,
             'amount'       => $order_amount,
             'currency'     => $order->get_currency(),
             'success_url'  => $success_url,
@@ -1039,7 +1040,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       try {
 
         $order_data = $order->get_data(); // The Order data
-        $order_amount = number_format($order->get_total(), 2, '.', '');
+        $order_amount = $this->format_amount($order->get_total());
 
         $shipping_same_as_billing = 'yes';
         $billing_fields = [
@@ -1109,7 +1110,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           $product_sales_price = (float) $product->get_sale_price();
           $product_discount_price = ($product_initial_price - $product_sales_price);
           if ($product_discount_price > 0.01) {
-            $product_entry['discount'] = number_format($product_discount_price * $product_quantity, 2);
+            $discount_total = $product_discount_price * $product_quantity;
+            $product_entry['discount'] = $this->format_amount($discount_total);
           }          
           
           if ( function_exists( 'wc_get_product_category_list' ) ) {
@@ -1259,6 +1261,16 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           $output = $text;
       }
       return $output;
+    }
+
+    /**
+     * Format amount.
+     *
+     * @param  float $amount
+     * @return string        Formated amount to string with 2 decimal places.
+     */
+    public function format_amount( $amount ) {
+      return wc_format_decimal( $amount, 2 );
     }
 
   }
@@ -1573,7 +1585,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       }
 
       $transaction = $this->connector->get_unique_transaction_id( $order );
-      $order_amount = number_format($order->get_total(), 2, '.', ''); 
+      $order_amount = $this->format_amount($order->get_total()); 
+      $order_number = $this->connector->get_order_number( $order );
       
       $success_url = $order->get_checkout_order_received_url();
       $cancel_url = $order->get_cancel_order_url_raw();
@@ -1593,7 +1606,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           $callback_url = site_url($callback_url);
       }
       
-      $sha256check    = hash( 'sha256', $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order->get_id() . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
+      $sha256check    = hash( 'sha256', $this->merchant->get_key() . '#' . $order_amount . '#' . $order->get_currency() . '#' . $transaction . '#' . $order_number . '#' . $success_url . '#' . $cancel_url . '#' . $this->merchant->get_secret() );
 
       $is_test_mode = 'yes' === $this->settings['in-test-mode'];
       if ( $is_test_mode && 'yes' !== $order->get_meta( 'in_test_mode' ) ) {
@@ -1613,7 +1626,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       $debug_info = array(
         'apikey' => $this->merchant->get_key(),
         'transaction' => $transaction,
-        'order_number' => $order->get_id(),
+        'order_number' => $order_number,
         'amount' => $order_amount,
         'currency' => $order->get_currency(),
         'success_url' => $success_url,
@@ -1637,7 +1650,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           <input type="hidden" name="protocol" value="3.1">
           <input type="hidden" name="apikey" value="<?php echo esc_attr($this->merchant->get_key()); ?>">
           <input type="hidden" name="transaction" value="<?php echo esc_attr($transaction); ?>">
-          <input type="hidden" name="order_number" value="<?php echo esc_attr($order->get_id()); ?>">
+          <input type="hidden" name="order_number" value="<?php echo esc_attr($order_number); ?>">
           <input type="hidden" name="amount" value="<?php echo esc_attr($order_amount); ?>">
           <input type="hidden" name="currency" value="<?php echo esc_attr($order->get_currency()); ?>">
           <input type="hidden" name="success_url" value="<?php echo esc_url($success_url); ?>">
@@ -1829,7 +1842,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       try {
 
         $order_data = $order->get_data(); // The Order data
-        $order_amount = number_format($order->get_total(), 2, '.', '');
+        $order_amount = $this->format_amount($order->get_total());
 
         $shipping_same_as_billing = 'yes';
         $billing_fields = [
@@ -1899,7 +1912,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           $product_sales_price = (float) $product->get_sale_price();
           $product_discount_price = ($product_initial_price - $product_sales_price);
           if ($product_discount_price > 0.01) {
-            $product_entry['discount'] = number_format($product_discount_price * $product_quantity, 2);
+            $discount_total = $product_discount_price * $product_quantity;
+            $product_entry['discount'] = $this->format_amount($discount_total);
           }
 
           $categories = $product->get_categories(); 
@@ -2018,6 +2032,16 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
 
       return $phone;
     }    
+
+    /**
+     * Format amount.
+     *
+     * @param  float $amount
+     * @return string        Formated amount to string with 2 decimal places.
+     */
+    public function format_amount( $amount ) {
+      return wc_format_decimal( $amount, 2 );
+    }
 
   }
 }

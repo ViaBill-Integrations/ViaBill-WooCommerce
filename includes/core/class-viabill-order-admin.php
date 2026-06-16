@@ -130,12 +130,14 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
       
       $response = $this->connector->cancel( $order );
 
+      $order_number = $this->connector->get_order_number( $order );
+
       if ( isset( $response['success'] ) && $response['success'] ) {
-        $this->logger->log( 'Successfully cancelled order ' . $order->get_id() . ' via ViaBill payment gateway', 'notice' );
+        $this->logger->log( 'Successfully cancelled order ' . $order_number . ' via ViaBill payment gateway', 'notice' );
         $note = __( 'Order successfully canceled at ViaBill.', 'viabill' );
         $order->update_meta_data( 'viabill_status', 'cancelled' );
       } else {
-        $this->logger->log( 'Failed to cancel order ' . $order->get_id() . ' via ViaBill payment gateway', 'error' );
+        $this->logger->log( 'Failed to cancel order ' . $order_number . ' via ViaBill payment gateway', 'error' );
         $note = __( 'Something went wrong while trying to cancel the order.', 'viabill' );
         if ( ! empty( $response['message'] ) ) {
           $note .= '<br><strong>' . __( 'ViaBill\'s response', 'viabill' ) . '</strong>: "' . $response['message'] . '"';
@@ -268,8 +270,10 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
 
       $status = $order->get_meta( 'viabill_status', true );
 
+      $order_number = $this->connector->get_order_number( $order );
+
       if ( ! $status ) {
-        $this->logger->log( 'Missing status for order with order ID ' . $order->get_id(), 'notice' );
+        $this->logger->log( 'Missing status for order with order ID ' . $order_number, 'notice' );
         return;
       }
 
@@ -531,8 +535,10 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
 
       $status = $this->connector->get_status( $order );
 
+      $order_number = $this->connector->get_order_number( $order );
+
       if ( ! $status ) {
-        $this->logger->log( 'No status returned by ViaBill for order ' . $order->get_id(), 'error' );
+        $this->logger->log( 'No status returned by ViaBill for order ' . $order_number, 'error' );
         wp_send_json(
           array(
             'success' => false,
@@ -553,7 +559,10 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @return void
      */
     public function sync_viabill_status( $status, $order ) {
-      $this->logger->log( 'Refresh status received order status: ' . $status . ' for order ' . $order->get_id(), 'info' );
+
+      $order_number = $this->connector->get_order_number( $order );
+
+      $this->logger->log( 'Refresh status received order status: ' . $status . ' for order ' . $order_number, 'info' );
 
       $old_status = $order->get_meta( 'viabill_status' );
 
