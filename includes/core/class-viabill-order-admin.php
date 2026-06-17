@@ -163,6 +163,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         return;
       }
 
+      $order = $order instanceof WC_Order ? $order : wc_get_order( $order_id );
+
       $capture_order_on_status_switch = isset( $this->settings['capture-order-on-status-switch'] ) && 'yes' === $this->settings['capture-order-on-status-switch'];
 
       if ( ! $capture_order_on_status_switch ) {
@@ -187,8 +189,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
      * @param  int       $order_id
      * @throws Exception Refund failed exception.
      */
-    public function maybe_refund( $order_id, $from = null, $to = null, $order = null ) {
-      $order = $order ? $order : wc_get_order( $order_id );
+    public function maybe_refund( $order_id, $from = null, $to = null, $order = null ) {            
+      $order = $order instanceof WC_Order ? $order : wc_get_order( $order_id );
 
       if ( !$this->is_viabill_payment($order->get_payment_method()) ) {
         return;

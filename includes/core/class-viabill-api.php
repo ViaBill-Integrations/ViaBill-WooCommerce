@@ -197,7 +197,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         }
       }
 
-      $order_id = wc_get_order_id_by_order_key( $params['orderNumber'] );
+      $order_id = $this->resolve_order_id_from_number( $params['orderNumber'] );
       if ( empty( $order_id ) ) {
         $order_id = intval( $params['orderNumber'] );
       }
@@ -292,6 +292,37 @@ if ( ! class_exists( 'Viabill_API' ) ) {
           'message'    => 'OK',
         )
       );
+    }
+
+    public function resolve_order_id_from_number( $order_number ) {
+      // 1. Custom/sequential order numbers are stored in meta.
+      $orders = wc_get_orders( array(
+          'limit'      => 1,
+          'return'     => 'ids',
+          'meta_query' => array(
+              'relation' => 'OR',
+              array( 'key' => '_order_number',           'value' => $order_number ),
+              array( 'key' => '_order_number_formatted', 'value' => $order_number ),
+          ),
+      ) );
+
+      if ( ! empty( $orders ) ) {
+          return absint( $orders[0] );
+      }
+
+      // 2. Stock WooCommerce: number == ID.
+      $order_id = absint( $order_number );
+      if ( $order_id && wc_get_order( $order_id ) ) {
+          return $order_id;
+      }
+
+      // 3. Legacy fallback: the value may actually be an order key.
+      $order_id = absint( wc_get_order_id_by_order_key( $order_number ) );
+      if ( $order_id && wc_get_order( $order_id ) ) {
+          return $order_id;
+      }
+
+      return 0;
     }
 
     /**
