@@ -404,8 +404,11 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
           )
         );
       }
+      
+      $order_id = isset( $_POST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+        : 0;
 
-      $order_id = isset( $_POST['order_id'] ) ? intval( $_POST['order_id'] ) : false;
       if ( empty( $order_id ) ) {
         $this->logger->log( 'Missing order ID while trying to cancel order via ajax.', 'error' );
         wp_send_json(
@@ -465,8 +468,11 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
           )
         );
       }
+      
+      $order_id = isset( $_POST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+        : 0;
 
-      $order_id = isset( $_POST['order_id'] ) ? intval( $_POST['order_id'] ) : false;
       if ( empty( $order_id ) ) {
         $this->logger->log( 'Missing order ID while trying to capture order via ajax.', 'error' );
         wp_send_json(
@@ -511,8 +517,11 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
           )
         );
       }
+      
+      $order_id = isset( $_POST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+        : 0;
 
-      $order_id = isset( $_POST['order_id'] ) ? intval( $_POST['order_id'] ) : false;
       if ( empty( $order_id ) ) {
         $this->logger->log( 'Missing order ID while trying to fetch order status via ajax.', 'error' );
         wp_send_json(
@@ -719,9 +728,12 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
             'message' => __( 'Invalid nonce.', 'viabill' ),
           )
         );
-      }
+      }      
 
-      $order_id = isset( $_REQUEST['order_id'] ) ? intval( $_REQUEST['order_id'] ) : false;
+      $order_id = isset( $_POST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+        : 0;
+
       if ( empty( $order_id ) ) {
         $this->logger->log( 'Failed to get order ID while trying to return capture form.', 'error' );
         wp_send_json(

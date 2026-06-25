@@ -197,10 +197,28 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         }
       }
 
-      $order_id = $this->resolve_order_id_from_number( $params['orderNumber'] );
+      $order_id = $this->resolve_order_id_from_number( $params['orderNumber'], $params );
+
       if ( empty( $order_id ) ) {
-        $order_id = intval( $params['orderNumber'] );
-      }
+        $order_number = isset( $params['orderNumber'] )
+            ? sanitize_text_field( wp_unslash( $params['orderNumber'] ) )
+            : '';
+
+        $this->logger->log(
+            'Failed to resolve order ID from order number "' . $order_number . '" for status API endpoint.',
+            'error'
+        );
+
+        $this->respond(
+            array(
+                'is_success' => false,
+                'message'    => 'Couldn\'t find corresponding order.',
+            ),
+            500
+        );
+
+        return;
+      }      
 
       // Check if received order id matches any orders.
       $order = wc_get_order( $order_id );
@@ -292,38 +310,115 @@ if ( ! class_exists( 'Viabill_API' ) ) {
           'message'    => 'OK',
         )
       );
-    }
+    }    
 
-    public function resolve_order_id_from_number( $order_number ) {
-      // 1. Custom/sequential order numbers are stored in meta.
-      $orders = wc_get_orders( array(
-          'limit'      => 1,
-          'return'     => 'ids',
-          'meta_query' => array(
-              'relation' => 'OR',
-              array( 'key' => '_order_number',           'value' => $order_number ),
-              array( 'key' => '_order_number_formatted', 'value' => $order_number ),
-          ),
-      ) );
+    public function resolve_order_id_from_number( $order_number, $request_params = array() ) {
+      $order_number = is_scalar( $order_number ) ? trim( (string) $order_number ) : '';
+
+      /*
+      * 1. Preferred/reliable lookup:
+      * Use the internal WooCommerce order ID and verify it with the order key.
+      */
+      $request_order_id = 0;
+      $request_order_key = '';
+
+      if ( isset( $request_params['order_id'] ) ) {
+          $request_order_id = absint( $request_params['order_id'] );
+      }
+
+      if ( isset( $request_params['order_key'] ) && is_scalar( $request_params['order_key'] ) ) {
+          $request_order_key = sanitize_text_field( wp_unslash( $request_params['order_key'] ) );
+      }
+
+      if ( $request_order_id && '' !== $request_order_key ) {
+          $order = wc_get_order( $request_order_id );
+
+          if ( $order && hash_equals( (string) $order->get_order_key(), (string) $request_order_key ) ) {
+              return $request_order_id;
+          }
+      }
+
+      /*
+      * If no usable order number was provided, stop here.
+      * This keeps the old behavior for legacy callbacks.
+      */
+      if ( '' === $order_number ) {
+          return 0;
+      }
+
+      /*
+      * 2. Legacy fallback:
+      * If the order number is already a real WooCommerce order ID.
+      */
+      $maybe_order_id = absint( $order_number );
+
+      if ( $maybe_order_id ) {
+          $order = wc_get_order( $maybe_order_id );
+
+          if ( $order ) {
+              return $maybe_order_id;
+          }
+      }
+
+      /*
+      * 3. Legacy fallback:
+      * If the value is actually an order key.
+      */
+      $order_id = absint( wc_get_order_id_by_order_key( $order_number ) );
+
+      if ( $order_id && wc_get_order( $order_id ) ) {
+          return $order_id;
+      }
+
+      /*
+      * 4. Legacy fallback:
+      * Look for common custom/sequential order number meta keys.
+      */
+      $orders = wc_get_orders(
+          array(
+              'limit'      => 1,
+              'return'     => 'ids',
+              'status'     => 'any',
+              'meta_query' => array(
+                  'relation' => 'OR',
+                  array(
+                      'key'     => '_order_number',
+                      'value'   => $order_number,
+                      'compare' => '=',
+                  ),
+                  array(
+                      'key'     => '_order_number_formatted',
+                      'value'   => $order_number,
+                      'compare' => '=',
+                  ),
+              ),
+          )
+      );
 
       if ( ! empty( $orders ) ) {
           return absint( $orders[0] );
       }
 
-      // 2. Stock WooCommerce: number == ID.
-      $order_id = absint( $order_number );
-      if ( $order_id && wc_get_order( $order_id ) ) {
-          return $order_id;
-      }
+      /*
+      * 5. Legacy fallback:
+      * Handle values like "CPH-10418".
+      * Only accept the numeric suffix if the loaded order's displayed order number
+      * exactly matches the original order number.
+      */
+      if ( preg_match( '/(\d+)$/', $order_number, $matches ) ) {
+          $maybe_order_id = absint( $matches[1] );
 
-      // 3. Legacy fallback: the value may actually be an order key.
-      $order_id = absint( wc_get_order_id_by_order_key( $order_number ) );
-      if ( $order_id && wc_get_order( $order_id ) ) {
-          return $order_id;
+          if ( $maybe_order_id ) {
+              $order = wc_get_order( $maybe_order_id );
+
+              if ( $order && (string) $order->get_order_number() === $order_number ) {
+                  return $maybe_order_id;
+              }
+          }
       }
 
       return 0;
-    }
+  }
 
     /**
     * Perform the checkout authorize request

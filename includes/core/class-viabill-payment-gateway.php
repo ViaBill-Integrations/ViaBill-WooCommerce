@@ -555,6 +555,20 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       }
     }
 
+    public function appendOrderIDs( $url, $order ) {
+      if ( ! $order instanceof WC_Order ) {
+          return $url;
+      }
+
+      return add_query_arg(
+          array(
+              'order_id'  => absint( $order->get_id() ),
+              'order_key' => $order->get_order_key(),
+          ),
+          $url
+      );
+    }
+
     public function do_receipt_page( $order_id ) {
 
         // ── Instance-level execution guard ───────────────────────────────────
@@ -596,6 +610,11 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         $success_url  = $order->get_checkout_order_received_url();
         $cancel_url   = $order->get_cancel_order_url_raw();
         $callback_url = $this->api->get_checkout_status_url( $this->id );
+
+        // append order id and order key to the urls
+        $success_url  = $this->appendOrderIDs($success_url, $order);
+        $cancel_url  = $this->appendOrderIDs($cancel_url, $order);
+        $callback_url  = $this->appendOrderIDs($callback_url, $order);
 
         foreach ( array( &$success_url, &$cancel_url, &$callback_url ) as &$url ) {
             if ( strpos( $url, 'http' ) !== 0 ) {

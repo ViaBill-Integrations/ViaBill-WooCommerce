@@ -574,7 +574,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
 
     public function get_order_number($order, $use_deprecated_id = false ) {
       if ( $use_deprecated_id ) { 
-        $order_id = $order->get_id();        
+        $order_id = $order->get_order_key();
       } else {
         $order_id = $order->get_order_number();
       }

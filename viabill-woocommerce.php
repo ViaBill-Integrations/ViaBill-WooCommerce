@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.72
+ * Version: 1.1.73
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -145,15 +145,16 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       require_once(plugin_dir_path( __FILE__ ). 'includes/core/class-viabill-merchant-profile.php' );
 
       self::register_constants();
-
-      add_action( 'plugins_loaded', array( $this, 'check_requirements' ) );
+      
+      add_action( 'init', array( $this, 'check_requirements' ), 5 );
 
       add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'add_settings_link' ) );
 
       add_action( 'admin_enqueue_scripts', array( $this, 'register_admin_script' ) );
       add_action( 'wp_enqueue_scripts', array( $this, 'register_client_assets' ) );
       add_action( 'admin_init', array( $this, 'maybe_redirect_to_registration' ) );
-      add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 5 );
+      // add_action( 'plugins_loaded', array( $this, 'load_textdomain' ), 5 );
+      add_action( 'init', array( $this, 'load_textdomain' ) );
       add_action( 'admin_init', array( $this, 'check_for_other_viabill_gateways' ), 1 );
       add_action( 'admin_init', array( $this, 'viabill_migrate_older_version' ), 5 );
       // add_action( 'activated_plugin', array( $this, 'check_backward_compatibility' ) );
@@ -164,20 +165,23 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       add_shortcode('viabill_pricetag_cart', array( $this, 'viabill_pricetag_cart_shortcode') );
       add_shortcode('viabill_pricetag_monthly_checkout', array( $this, 'viabill_pricetag_monthly_checkout_shortcode') );
 
+      add_action( 'init', array( $this, 'init_plugin' ), 10 );            
+    }
+
+    public function init_plugin() {
       new Viabill_Registration( true );
 
       $merchant = new Viabill_Merchant_Profile();
       $merchant->register_ajax_endpoints();
 
       if ( Viabill_Main::is_merchant_registered() ) {
-        $this->init_pricetags();
+          $this->init_pricetags();
 
-        if ( ! self::is_payment_gateway_disabled() ) {
-          $this->init_payment_gateway();
-        }
+          if ( ! self::is_payment_gateway_disabled() ) {
+              $this->init_payment_gateway();
+          }
       }
-      
-    }
+    }    
 
     /**
      * Load ViaBill Payment Gateway.
@@ -342,7 +346,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.72' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.73' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
