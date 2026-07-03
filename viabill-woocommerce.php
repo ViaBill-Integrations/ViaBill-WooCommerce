@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.73
+ * Version: 1.1.74
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -346,7 +346,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.73' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.74' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -563,11 +563,35 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
      */
     public function register_admin_script() {
       wp_enqueue_script( 'viabill-admin-script', VIABILL_DIR_URL . '/assets/js/viabill-admin.js', array( 'jquery' ), VIABILL_PLUGIN_VERSION, true );
+
+      // Resolve current order ID for both classic and HPOS order-edit screens.
+      $current_order_id = 0;
+
+      // HPOS: admin.php?page=wc-orders&action=edit&id=123
+      if ( isset( $_GET['page'], $_GET['id'] ) && 'wc-orders' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $current_order_id = absint( $_GET['id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+      } elseif ( isset( $_GET['post'] ) ) { // Classic: post.php?post=123&action=edit
+        $current_order_id = absint( $_GET['post'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+      }
+
+      // The classic 'post' param is also present when editing products, pages, etc.,
+      // so confirm the resolved ID actually belongs to an order before trusting it.
+      if ( $current_order_id ) {
+        if ( class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) ) {
+          if ( ! \Automattic\WooCommerce\Utilities\OrderUtil::is_order( $current_order_id ) ) {
+            $current_order_id = 0;
+          }
+        } elseif ( ! wc_get_order( $current_order_id ) ) {
+          $current_order_id = 0;
+        }
+      }
+
       wp_localize_script(
         'viabill-admin-script',
         'viabillAdminScript',
         array(
           'url'                           => admin_url( 'admin-ajax.php' ),
+          'order_id'                      => $current_order_id,
           'automatic_refund'              => self::get_gateway_settings( 'automatic-refund-status' ),
           'status_capture'                => self::get_gateway_settings( 'capture-order-on-status-switch' ),
           'msg_error_default'             => __( 'Something went wrong, please refresh the page and try again.', 'viabill' ),
@@ -583,7 +607,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
           'disable_third_party_gateway_url'   => self::get_disable_thrid_party_link()
         )
       );
-    }    
+    }
 
     /**
      * Register plugin's client CSS and JS scripts.

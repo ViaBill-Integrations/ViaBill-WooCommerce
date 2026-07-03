@@ -31,7 +31,8 @@ jQuery(document).ready(function( $ ) {
 
         var data = {
           action: 'cancel_viabill_payment',
-          order_id: $('#post_ID').val(),
+          //order_id: $('#post_ID').val(),
+          order_id: viabillAdminScript.order_id,
           viabill_cancel_nonce: $('input[name="cancel_order_nonce"]').val(),
           _wp_http_referer: $('input[name="_wp_http_referer"]').val()
         };
@@ -69,7 +70,8 @@ jQuery(document).ready(function( $ ) {
         viabillAdminScript.url,
         {
           action: 'get_viabill_capture_form',
-          order_id: $('#post_ID').val(),
+          //order_id: $('#post_ID').val(),
+          order_id: viabillAdminScript.order_id,
           viabill_show_capture_form_nonce: $('input[name="viabill_show_capture_form_nonce"]').val()
         }
       ).done( function( data ) {
@@ -175,7 +177,8 @@ jQuery(document).ready(function( $ ) {
     var data = {
       action: 'capture_viabill_payment',
       amount: amount,
-      order_id: $('#post_ID').val(),
+      //order_id: $('#post_ID').val(),
+      order_id: viabillAdminScript.order_id,
       viabill_capture_nonce: $('input[name="viabill_capture_nonce"]').val(),
       _wp_http_referer: $('input[name="_wp_http_referer"]').val()
     };
@@ -224,7 +227,8 @@ jQuery(document).ready(function( $ ) {
 
     var data = {
       action: 'get_viabill_status',
-      order_id: $('#post_ID').val(),
+      //order_id: $('#post_ID').val(),
+      order_id: viabillAdminScript.order_id,
       viabill_status_refresh: $('input[name="viabill_status_refresh"]').val(),
       _wp_http_referer: $('input[name="_wp_http_referer"]').val()
     };

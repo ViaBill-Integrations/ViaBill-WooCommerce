@@ -405,8 +405,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         );
       }
       
-      $order_id = isset( $_POST['order_id'] )
-        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+      $order_id = isset( $_REQUEST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_REQUEST['order_id'] ) )
         : 0;
 
       if ( empty( $order_id ) ) {
@@ -469,8 +469,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         );
       }
       
-      $order_id = isset( $_POST['order_id'] )
-        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+      $order_id = isset( $_REQUEST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_REQUEST['order_id'] ) )
         : 0;
 
       if ( empty( $order_id ) ) {
@@ -518,8 +518,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         );
       }
       
-      $order_id = isset( $_POST['order_id'] )
-        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+      $order_id = isset( $_REQUEST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_REQUEST['order_id'] ) )
         : 0;
 
       if ( empty( $order_id ) ) {
@@ -730,8 +730,8 @@ if ( ! class_exists( 'Viabill_Order_Admin' ) ) {
         );
       }      
 
-      $order_id = isset( $_POST['order_id'] )
-        ? wc_sanitize_order_id( wp_unslash( $_POST['order_id'] ) )
+      $order_id = isset( $_REQUEST['order_id'] )
+        ? wc_sanitize_order_id( wp_unslash( $_REQUEST['order_id'] ) )
         : 0;
 
       if ( empty( $order_id ) ) {
