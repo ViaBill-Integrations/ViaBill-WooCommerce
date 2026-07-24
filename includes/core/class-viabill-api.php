@@ -488,7 +488,34 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $redirect_url = null;
       $error_msg = null;
 
-      //++++++++++++++++++++++++++++++++++++++++
+      $http_request_timeout = 60; // in seconds
+
+      // Concurrency guard:
+      // Serialize checkout-authorize requests per (apikey, transaction).
+      // Concurrent duplicate inits for the same merchant/transaction (double
+      // click, double-bound handler, page refresh racing an in-flight request)
+      // can deadlock the payment backend on checkout_context cleanup. We take
+      // an atomic lock via add_option(): the row INSERT either succeeds
+      // (lock acquired) or fails because it already exists (duplicate in
+      // flight). Transients are NOT atomic and would race here.
+      $lock_key      = 'viabill_chkauth_lock_' . md5( $formData['apikey'] . '|' . $formData['transaction'] );
+      $lock_ttl      = $http_request_timeout * 2; // seconds; must exceed $http_request_timeout value
+      $lock_acquired = $this->acquire_checkout_lock( $lock_key, $lock_ttl );
+
+      if ( ! $lock_acquired ) {
+        $this->logger->log(
+          'Duplicate checkout-authorize request suppressed for transaction ' .
+          $formData['transaction'] . ' (a request is already in flight).',
+          'warning'
+        );
+        // Respond in the shape the front-end expects. No redirect: the
+        // original in-flight request will deliver it.
+        exit( json_encode( array(
+          'redirect' => '',
+          'error'    => 'A checkout request for this order is already in progress. Please wait a moment.',
+        ) ) );
+      }
+     
       $url = $this->connector->get_checkout_url();
 
       $method = 'POST';
@@ -506,49 +533,56 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         'redirection' => 0,
         'httpversion' => '1.1',
         'sslverify' => false,
-        'timeout' => 60
+        'timeout' => $http_request_timeout
       );
 
-      $data = wp_remote_post($url, $args);
-      $redirect_url = '';
-      $error_msg = ''; 
+      try {     
+        $data = wp_remote_post($url, $args);
+        $redirect_url = '';
+        $error_msg = ''; 
 
-      if (is_wp_error($data)) {        
-        $error_msg = $data->get_error_message();    
-        $this->logger->log( 'Failed to execute do_checkout_authorize(): '.$error_msg, 'critical' );
-      }             
+        if (is_wp_error($data)) {        
+          $error_msg = $data->get_error_message();    
+          $this->logger->log( 'Failed to execute do_checkout_authorize(): '.$error_msg, 'critical' );
+        }             
 
-      if (is_array($data)) {    
-          $data_str = '';
-          $response_code =  (int) wp_remote_retrieve_response_code($data);
-          if ($response_code == 400) {            
-            $response_message = wp_remote_retrieve_response_message($data);            
-            if (!empty($response_message)) {
-              $error_msg = $response_message;
-            }
+        if (is_array($data)) {    
+            $data_str = '';
+            $response_code =  (int) wp_remote_retrieve_response_code($data);
+            if ($response_code == 400) {            
+              $response_message = wp_remote_retrieve_response_message($data);            
+              if (!empty($response_message)) {
+                $error_msg = $response_message;
+              }
 
-            $response_body = wp_remote_retrieve_body($data);
-            if (!empty($response_body)) {
-              $body_data = json_decode($response_body, true);
-              if (is_array($body_data)) {
-                if (isset($body_data['errors'][0]['error'])) {
-                    $error_msg = (empty($error_msg))?$body_data['errors'][0]['error']:$error_msg.' : '.$body_data['errors'][0]['error'];
-                    $this->logger->log('Remote data error detail: ' . $error_msg, 'notice');
+              $response_body = wp_remote_retrieve_body($data);
+              if (!empty($response_body)) {
+                $body_data = json_decode($response_body, true);
+                if (is_array($body_data)) {
+                  if (isset($body_data['errors'][0]['error'])) {
+                      $error_msg = (empty($error_msg))?$body_data['errors'][0]['error']:$error_msg.' : '.$body_data['errors'][0]['error'];
+                      $this->logger->log('Remote data error detail: ' . $error_msg, 'notice');
+                  }
                 }
               }
-            }
 
-            $data_str = print_r($data, true);
+              $data_str = print_r($data, true);
+              $data_str = str_replace(array("\r", "\n"), '', $data_str);  // Remove new lines
+              $this->logger->log('Remote data received (Code: ' . $response_code . ', Message: ' . $response_message . '): ' . $data_str, 'notice'); 
+            } else {
+              $redirect_url = wp_remote_retrieve_header( $data, 'Location' );
+            }
+        } else {
+            $data_str = var_export($data, true);
             $data_str = str_replace(array("\r", "\n"), '', $data_str);  // Remove new lines
-            $this->logger->log('Remote data received (Code: ' . $response_code . ', Message: ' . $response_message . '): ' . $data_str, 'notice'); 
-          } else {
-            $redirect_url = wp_remote_retrieve_header( $data, 'Location' );
-          }
-      } else {
-          $data_str = var_export($data, true);
-          $data_str = str_replace(array("\r", "\n"), '', $data_str);  // Remove new lines
-          $this->logger->log('Remote data received (object): ' . $data_str, 'notice');
-      }
+            $this->logger->log('Remote data received (object): ' . $data_str, 'notice');
+        }
+      } finally {
+          // Release the per-transaction lock now that the backend round-trip is
+          // complete, so a legitimate retry (e.g. after an error) is not blocked
+          // for the remainder of the TTL.
+          $this->release_checkout_lock( $lock_key );        
+      }      
 
       if (isset($redirect_url)) {
         $response = json_encode(array('redirect'=>$redirect_url, 'error'=>$error_msg));
@@ -557,6 +591,45 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         $error_msg = 'Could not perform this checkout operation. Please try again.';
         wp_die($error_msg);
       }
+    }
+
+    /**
+     * Atomically acquire a short-lived checkout lock.
+     *
+     * Relies on add_option() failing when the option row already exists,
+     * which is atomic at the database level (unlike transients). Stale locks
+     * left behind by a fatal error or timed-out request are expired via the
+     * stored timestamp.
+     *
+     * @param string $lock_key Option name used as the lock.
+     * @param int    $ttl      Lock lifetime in seconds.
+     * @return bool True if the lock was acquired.
+     */
+    private function acquire_checkout_lock( $lock_key, $ttl ) {
+      // add_option() returns false if the option already exists.
+      if ( add_option( $lock_key, (string) time(), '', 'no' ) ) {
+        return true;
+      }
+
+      // Lock row exists: check whether it is stale and can be taken over.
+      $locked_at = (int) get_option( $lock_key, 0 );
+      if ( $locked_at > 0 && ( time() - $locked_at ) > $ttl ) {
+        delete_option( $lock_key );
+        // Retry the atomic insert once; if another request wins the race,
+        // treat it as lock-not-acquired.
+        return (bool) add_option( $lock_key, (string) time(), '', 'no' );
+      }
+
+      return false;
+    }
+
+    /**
+     * Release a previously acquired checkout lock.
+     *
+     * @param string $lock_key Option name used as the lock.
+     */
+    private function release_checkout_lock( $lock_key ) {
+      delete_option( $lock_key );
     }
       
     public function headersToArray( $str )
