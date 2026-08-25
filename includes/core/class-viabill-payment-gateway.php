@@ -718,29 +718,11 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             var BUTTON_ID = 'viabill-payment-form-submit';
             var fields    = {$js_fields};
 
-            // Guard against concurrent/duplicate checkout-authorize requests.
-            // Multiple simultaneous inits for the same merchant/transaction can
-            // cause row-lock contention (deadlocks) on the payment backend.
-            var submitInFlight = false;
-
-            function setButtonBusy(busy) {
-                var btn = document.getElementById(BUTTON_ID);
-                if (!btn) return;
-                btn.disabled = !!busy;
-                if (busy) {
-                    btn.setAttribute('data-viabill-original-value', btn.value);
-                    btn.value = 'Processing\u2026';
-                } else if (btn.hasAttribute('data-viabill-original-value')) {
-                    btn.value = btn.getAttribute('data-viabill-original-value');
-                    btn.removeAttribute('data-viabill-original-value');
-                }
-            }
-
             function ensureForm() {
                 var form = document.getElementById(FORM_ID);
                 if (form) return form;
 
-                console.warn('[ViaBill] Form not found in DOM, thus we need to create it programmatically.');
+                console.warn('[ViaBill] Form not found in DOM — creating programmatically.');
 
                 form = document.createElement('form');
                 form.id     = FORM_ID;
@@ -764,7 +746,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             function ensureButton() {
                 if (document.getElementById(BUTTON_ID)) return;
 
-                console.warn('[ViaBill] Submit button not found in DOM, thus we need to create it programmatically.');
+                console.warn('[ViaBill] Submit button not found in DOM — creating programmatically.');
 
                 var btn     = document.createElement('input');
                 btn.type    = 'button';
@@ -814,15 +796,6 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             }
 
             window.postViabillPaymentForm = function() {
-                // Re-entrancy guard: ignore any trigger (auto-redirect, click,
-                // double-click, duplicate handler) while a request is pending.
-                if (submitInFlight) {
-                    console.warn('[ViaBill] Checkout request already in progress. Duplicate submission ignored.');
-                    return;
-                }
-                submitInFlight = true;
-                setButtonBusy(true);
-
                 ensureForm();
                 var formData = serializeForm(FORM_ID);
                 ajaxPost(
@@ -830,18 +803,13 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
                     formData,
                     function(data) {
                         if (data.redirect) {
-                            // Keep the guard engaged: we are navigating away.
                             window.location.href = data.redirect;
                         } else {
                             console.warn('[ViaBill] No redirect URL in response.', data);
-                            submitInFlight = false;
-                            setButtonBusy(false);
                         }
                     },
                     function(err) {
                         console.error('[ViaBill] Unable to post payment form.', err);
-                        submitInFlight = false;
-                        setButtonBusy(false);
                     }
                 );
             };
@@ -872,22 +840,22 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         })();
         ";
 
-        // Output strategy (layered fallback)
+        // ── Output strategy (layered fallback) ────────────────────────────────
         //
         // Priority 1: wp_footer hook (standard WP themes / shortcode checkout).
         //
-        // Priority 2: wp_add_inline_script attached to an already-enqueued handle;
-        //             safe for block-based checkout pages or themes where
+        // Priority 2: wp_add_inline_script attached to an already-enqueued handle
+        //             — safe for block-based checkout pages or themes where
         //             ob_start captures echo output inside wp_footer hooks.
         //
-        // Priority 3: Direct echo with ob flush as the last resort for environments
+        // Priority 3: Direct echo with ob flush — last resort for environments
         //             where neither wp_footer nor the enqueue system is reliable.
         //
         // The ob_get_level() diagnostic log helps trace buffering issues via
         // the site debug.log without surfacing anything to the visitor.
 
         $this->logger->log(
-            '[ViaBill] do_receipt_page output strategy with ob_get_level: ' . ob_get_level(),
+            '[ViaBill] do_receipt_page output strategy — ob_get_level: ' . ob_get_level(),
             'debug'
         );
 
@@ -895,7 +863,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         $full_html_out = ( ! empty( $redirect_msg ) ? $redirect_msg : '' ) . $script_tag;
 
         if ( did_action( 'wp_footer' ) === 0 ) {
-            // wp_footer has NOT yet fired (register normally).
+            // wp_footer has NOT yet fired — register normally.
             add_action(
                 'wp_footer',
                 function() use ( $full_html_out ) {
@@ -913,7 +881,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
             );
         } else {
             // wp_footer has already fired (block checkout, custom template, etc.).
-            // Attempt wp_add_inline_script first (cleaner, avoids ob issues).
+            // Attempt wp_add_inline_script first — cleaner, avoids ob issues.
             $enqueued_handle = '';
             foreach ( array( 'wc-checkout', 'jquery', 'wp-blocks' ) as $handle ) {
                 if ( wp_script_is( $handle, 'enqueued' ) || wp_script_is( $handle, 'done' ) ) {
@@ -1714,48 +1682,12 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           <input type="hidden" name="tbyb" value="<?php echo $tbyb ? '1' : '0'; ?>">
         </form> 
 
-        <?php if ( 'yes' !== $this->settings['auto-redirect'] ) : ?>
-          <?php
-          // NOTE: the click handler is bound exactly once via jQuery in the
-          // enqueued script below. Do NOT add an inline onclick attribute here;
-          // a second handler causes two concurrent checkout-authorize requests
-          // for the same merchant/transaction, which can deadlock the payment
-          // backend (checkout_context row-lock contention).
-          ?>
-          <input type="button" id="viabill-try-payment-form-submit" value="Submit" />
-        <?php endif; ?>
+        <input type="button" id="viabill-try-payment-form-submit" value="Submit" onclick="postViabillTryPaymentForm()" />
         
         <?php
 
         $inline_script = "      
-        // Guard against concurrent/duplicate checkout-authorize requests.
-        // Duplicate simultaneous inits for the same merchant/transaction can
-        // cause row-lock contention (deadlocks) on the payment backend.
-        window.viabillTrySubmitInFlight = window.viabillTrySubmitInFlight || false;
-
-        function viabillTrySetButtonBusy(busy) {
-          var btn = jQuery('#viabill-try-payment-form-submit');
-          if (!btn.length) return;
-          btn.prop('disabled', !!busy);
-          if (busy) {
-            btn.data('viabill-original-value', btn.val());
-            btn.val('Processing\u2026');
-          } else if (typeof btn.data('viabill-original-value') !== 'undefined') {
-            btn.val(btn.data('viabill-original-value'));
-            btn.removeData('viabill-original-value');
-          }
-        }
-
         function postViabillTryPaymentForm() {
-          // Re-entrancy guard: ignore any trigger (auto-redirect, click,
-          // double-click) while a request is pending.
-          if (window.viabillTrySubmitInFlight) {
-            console.warn('[ViaBill] Checkout request already in progress \u2014 duplicate submission ignored.');
-            return;
-          }
-          window.viabillTrySubmitInFlight = true;
-          viabillTrySetButtonBusy(true);
-
           var formData = jQuery('#viabill-try-payment-form').serialize();
           jQuery.ajax({
             type: 'POST',          
@@ -1765,27 +1697,20 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
             
             success: function(data, textStatus){			
               if (data.redirect) {                            
-                // Keep the guard engaged: we are navigating away.
                 window.location.href = data.redirect;
               } else {
                 console.log('No data redirect after posting ViaBill Try Payment Form');
                 console.log(data);
-                window.viabillTrySubmitInFlight = false;
-                viabillTrySetButtonBusy(false);
               }
             },
             error: function(errMsg) {
               console.log('Unable to post ViaBill Try Payment Form');
               console.log(errMsg);			
-              window.viabillTrySubmitInFlight = false;
-              viabillTrySetButtonBusy(false);
             }
           }); 
         }
 
-        // Bind exactly once. .off() first so a re-enqueued script (theme quirks,
-        // duplicate footer rendering) can never stack a second handler.
-        jQuery('#viabill-try-payment-form-submit').off('click.viabill').on('click.viabill', postViabillTryPaymentForm);
+        jQuery('#viabill-try-payment-form-submit').on('click', postViabillTryPaymentForm);
         ";
 
         wc_enqueue_js($inline_script);
