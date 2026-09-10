@@ -37,13 +37,6 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
     public static $tried_to_register = false;
 
     /**
-     * ViaBill's URL for terms and conditions.
-     *
-     * @var string
-     */
-    private $terms_url = 'https://viabill.com/trade-terms/';
-
-    /**
      * Registration page slug.
      *
      * @static
@@ -109,10 +102,15 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
     }
 
     /**
-     * Process registration or login (fetch data from $_POST) and return
-     * an array with the following structure:
+     * Process manually entered ViaBill account credentials (fetched from
+     * $_POST) and return an array with the following structure:
      *    ['success' => bool, 'message' => string]
-     * or false if registration already tried.
+     * or false if nothing was submitted.
+     *
+     * The merchant is expected to obtain the API key, API secret and
+     * PriceTag script elsewhere (e.g. from the ViaBill merchant portal)
+     * and enter them here manually. No remote call to the ViaBill server
+     * is performed.
      *
      * @return array|bool
      */
@@ -123,52 +121,46 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
       );
 
       if ( isset( $_POST[ self::SLUG ] ) && isset( $_POST[ self::SLUG . '-nonce' ] ) ) {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+          return $response;
+        }
+
         $nonce = sanitize_key( $_POST[ self::SLUG . '-nonce' ] );
         if ( wp_verify_nonce( $nonce, self::SLUG . '-action' ) === 1 ) {
-          $country = isset( $_POST['viabill-reg-country'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['viabill-reg-country'] ) ) ) : '';
+          $key      = isset( $_POST['viabill-api-key'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-api-key'] ) ) : '';
+          $secret   = isset( $_POST['viabill-api-secret'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-api-secret'] ) ) : '';
+          $pricetag = isset( $_POST['viabill-pricetag'] ) ? self::sanitize_pricetag_script( wp_unslash( $_POST['viabill-pricetag'] ) ) : '';
 
-          $email = isset( $_POST['viabill-reg-email'] ) ? sanitize_email( wp_unslash( $_POST['viabill-reg-email'] ) ) : '';
+          // Allow the merchant to keep the already stored secret by leaving
+          // the (masked) secret field empty.
+          if ( empty( $secret ) ) {
+            $secret = (string) get_option( 'viabill_secret', '' );
+          }
 
-          $name = isset( $_POST['viabill-reg-contact-name'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-contact-name'] ) ) : '';
-
-          $tax_id = isset( $_POST['viabill-reg-taxid'] ) ? $this->sanitize_tax_id( wp_unslash( $_POST['viabill-reg-taxid'] ), $country ) : '';
-          
-          if (empty($tax_id)) {
-            $response = array(
-              'success' => false,
-              'message' => __( 'Tax ID cannot be empty, or contain an invalid value. Please try again.', 'viabill' ),
-            );    
+          if ( empty( $key ) || empty( $secret ) || empty( $pricetag ) ) {
+            $response['message'] = __( 'Please fill in the API key, API secret and PriceTag script. All three values are required.', 'viabill' );
             return $response;
           }
 
-          $additional_data = array(
-            isset( $_POST['viabill-reg-shop-url'] ) ? esc_url_raw( wp_unslash( $_POST['viabill-reg-shop-url'] ) ) : '',
-            isset( $_POST['viabill-reg-phone'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-reg-phone'] ) ) : '',
+          $is_saved = $this->merchant->save_registration_data(
+            array(
+              'key'            => $key,
+              'secret'         => $secret,
+              'pricetagScript' => $pricetag,
+            )
           );
 
-          $body = $this->connector->register( $email, $name, $country, $tax_id, $additional_data );
-          $this->process_response_body( $response, $body );
+          if ( $is_saved ) {
+            $response['success'] = true;
+            $response['message'] = __( 'ViaBill account credentials saved successfully.', 'viabill' );
+          } else {
+            $response['message'] = __( 'Failed to save the ViaBill account credentials, please try again.', 'viabill' );
+          }
+
           $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
-          
           return $response;
         } else {
-          $this->logger->log( 'Failed to verify nonce \'' . $nonce . '\' while trying to register the merchant.', 'alert' );
-          return $response;
-        }
-      } elseif ( isset( $_POST['viabill-login'] ) && isset( $_POST['viabill-login-nonce'] ) ) {
-        $nonce = sanitize_key( $_POST['viabill-login-nonce'] );
-        if ( wp_verify_nonce( $nonce, 'viabill-login-action' ) === 1 ) {
-
-          $password = isset( $_POST['viabill-login-password'] ) ? sanitize_text_field( wp_unslash( $_POST['viabill-login-password'] ) ) : '';
-          $email    = isset( $_POST['viabill-login-email'] ) ? sanitize_email( wp_unslash( $_POST['viabill-login-email'] ) ) : '';
-
-          $body = $this->connector->login( $email, $password );
-          $this->process_response_body( $response, $body, true );
-          $this->logger->log( $response['message'], $response['success'] ? 'info' : 'critical' );
-
-          return $response;
-        } else {
-          $this->logger->log( 'Failed to verify nonce while trying to log in the merchant.', 'alert' );
+          $this->logger->log( 'Failed to verify nonce \'' . $nonce . '\' while trying to save the merchant credentials.', 'alert' );
           return $response;
         }
       }
@@ -176,231 +168,94 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
     }
 
     /**
-     * Process registration response body from the ViaBill's API and define
-     * $response's message and success bool flag.
+     * Sanitize the PriceTag script. The PriceTag snippet provided by ViaBill
+     * is a <script> tag so it can't go through the regular sanitize/kses
+     * helpers (they would strip it). Only whitespace normalization is done
+     * here; saving is restricted to shop managers/administrators.
      *
-     * @param  array &$response
-     * @param  array $body
-     * @param  bool  $is_body   Defaults to false.
-     * @return void
+     * @param  string $script
+     * @return string
      */
-    private function process_response_body( &$response, $body, $is_login = false ) {
-      if ( ! $body ) {
-        if ( $is_login ) {
-          $response['message'] = __( 'Failed to login, please try again.', 'viabill' );
-        } else {
-          $response['message'] = __( 'Failed to register, please try again.', 'viabill' );
-        }
-        return;
+    public static function sanitize_pricetag_script( $script ) {
+      $script = trim( (string) $script );
+      if ( '' === $script ) {
+        return '';
       }
-
-      $error_messages = $this->connector->get_error_messages( $body );
-      if ( is_string( $error_messages ) ) {
-        $response['message'] = $error_messages;
-      } else {
-        $is_saved = $this->merchant->save_registration_data( $body );
-        if ( $is_saved ) {
-          $response['success'] = true;
-          if ( $is_login ) {
-            $response['message'] = __( 'User is successfully logged-in.', 'viabill' );
-          } else {
-            $response['message'] = __( 'User is successfully registered.', 'viabill' );
-          }
-        }
+      // Require the value to actually look like a script snippet.
+      if ( false === stripos( $script, '<script' ) ) {
+        return '';
       }
+      return $script;
     }
 
     /**
-     * Echo merchant's registration/login form.
+     * Echo merchant's account credentials form.
+     *
+     * The merchant obtains the API key, API secret and PriceTag script
+     * elsewhere (e.g. from the ViaBill merchant portal) and enters them
+     * here manually.
      */
     public function show() {
-      $countries = $this->connector->get_available_countries();
-      array_unshift(
-        $countries,
-        array(
-          'code' => '',
-          'name' => 'Choose Country',
-        )
-      );
+      $key      = get_option( 'viabill_key', '' );
+      $secret   = get_option( 'viabill_secret', '' );
+      $pricetag = get_option( 'viabill_pricetag', '' );
+
+      $has_secret = is_string( $secret ) && '' !== $secret;
       ?>
       <form method="post">
-        <h2><?php esc_html_e( 'New to ViaBill?', 'viabill' ); ?></h2>
-        <p><?php esc_html_e( 'Create your ViaBill account by typing in your e-mail and selecting your country.', 'viabill' ); ?></p>
+        <h2><?php esc_html_e( 'ViaBill Account Credentials', 'viabill' ); ?></h2>
+        <p><?php esc_html_e( 'Enter your ViaBill API key, API secret and PriceTag script below. You can find these values in your ViaBill merchant account.', 'viabill' ); ?></p>
         <table class="form-table">
           <tbody>
             <?php
             $this->do_field(
-              __( 'E-mail', 'viabill' ),
+              __( 'API Key', 'viabill' ),
               array(
-                'id'       => 'viabill-reg-email',
-                'name'     => 'viabill-reg-email',
-                'type'     => 'email',
-                'required' => true,
-              )
-            );
-            ?>
-
-            <?php
-            $current_user_id = get_current_user_id();
-            $user_data       = get_userdata( $current_user_id );
-            $user_phone      = get_user_meta( $current_user_id, 'billing_phone', true );
-            ?>
-
-            <?php
-            $this->do_field(
-              __( 'Contact name', 'viabill' ),
-              array(
-                'id'    => 'viabill-reg-contact-name',
-                'name'  => 'viabill-reg-contact-name',
-                'type'  => 'text',
-                'value' => $user_data->display_name ? $user_data->display_name : '',
-                'class' => 'input-text regular-input',
-                'required' => true,
-              )
-            );
-            ?>
-
-            <?php
-            $this->do_field(
-              __( 'Country', 'viabill' ),
-              array(
-                'id'       => 'viabill-reg-country',
-                'name'     => 'viabill-reg-country',
-                'type'     => 'select',
-                'class'    => 'select',
-                'style'    => 'min-width: 215px;',
-                'required' => true,
-              ),
-              $countries
-            );
-            ?>
-
-            <?php
-            $this->do_field(
-              __( 'Shop URL (live)', 'viabill' ),
-              array(
-                'id'       => 'viabill-reg-shop-url',
-                'name'     => 'viabill-reg-shop-url',
+                'id'       => 'viabill-api-key',
+                'name'     => 'viabill-api-key',
                 'type'     => 'text',
-                'value'    => get_site_url(),
+                'value'    => esc_attr( $key ),
                 'class'    => 'input-text regular-input',
                 'required' => true,
-              )
-            );
-            ?>
-            
-            <?php
-            $this->do_field(
-              __( 'Phone number', 'viabill' ),
-              array(
-                'id'    => 'viabill-reg-phone',
-                'name'  => 'viabill-reg-phone',
-                'type'  => 'phone',
-                'value' => $user_phone,
-                'class' => 'input-text regular-input',
+                'autocomplete' => 'off',
               )
             );
             ?>
 
             <?php
-            $this->do_field(
-              __( 'Tax ID', 'viabill' ),
-              array(
-                'id'    => 'viabill-reg-taxid',
-                'name'  => 'viabill-reg-taxid',
-                'type'  => 'text',
-                'value' => '',
-                'class' => 'input-text regular-input',
-                'required' => true,
-              )
+            // The secret is never printed back to the page. If a secret is
+            // already stored the field simply shows a masked placeholder and
+            // can be left empty to keep the current value.
+            $secret_field_args = array(
+              'id'           => 'viabill-api-secret',
+              'name'         => 'viabill-api-secret',
+              'type'         => 'password',
+              'value'        => '',
+              'class'        => 'input-text regular-input',
+              'autocomplete' => 'new-password',
             );
-            ?>
-
-            <?php
-            $terms_label  = __( 'I\'ve read and accept the', 'viabill' ) . ' ';
-            $terms_label .= '<a id="viabill-terms-link" href="' . $this->terms_url . '" target="_blank">' . __( 'terms & conditions', 'viabill' ) . '</a>';
-
-            $this->do_field(
-              $terms_label,
-              array(
-                'id'       => 'viabill-terms',
-                'name'     => 'viabill-terms',
-                'type'     => 'checkbox',
-                'required' => true,
-              )
-            );
-            ?>
-
-            <?php $this->do_submit( self::SLUG, __( 'Register', 'viabill' ), self::SLUG . '-action', self::SLUG . '-nonce' ); ?>
-          </tbody>
-        </table>
-      </form>
-      <form method="post">
-        <table class="form-table">
-          <tbody>
-            <tr valign="top">
-              <th scope="row" class="titledesc"></th>
-              <td class="forminp">
-                <h3>- <?php esc_html_e( 'OR', 'viabill' ); ?> -</h3>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <h2><?php esc_html_e( 'Already have a ViaBill account?', 'viabill' ); ?></h2>
-        <p><?php esc_html_e( 'Log in with your e-mail and password.', 'viabill' ); ?></p>
-        <table class="form-table">
-          <tbody>
-            <?php
-            $this->do_field(
-              __( 'E-mail', 'viabill' ),
-              array(
-                'id'       => 'viabill-login-email',
-                'name'     => 'viabill-login-email',
-                'type'     => 'email',
-                'class'    => 'input-text regular-input',
-                'required' => true,
-              )
-            );
-            ?>
-
-            <?php
-            $this->do_field(
-              __( 'Password', 'viabill' ),
-              array(
-                'id'       => 'viabill-login-password',
-                'name'     => 'viabill-login-password',
-                'type'     => 'password',
-                'class'    => 'input-text regular-input',
-                'required' => true,
-              )
-            );
+            if ( $has_secret ) {
+              $secret_field_args['placeholder'] = '********';
+            } else {
+              $secret_field_args['required'] = true;
+            }
+            $this->do_field( __( 'API Secret', 'viabill' ), $secret_field_args );
+            if ( $has_secret ) {
+              echo '<tr valign="top"><th scope="row" class="titledesc"></th><td class="forminp"><p class="description">' . esc_html__( 'An API secret is already saved. Leave this field empty to keep it.', 'viabill' ) . '</p></td></tr>';
+            }
             ?>
 
             <tr valign="top">
-              <th scope="row" class="titledesc"></th>
+              <th scope="row" class="titledesc">
+                <label for="viabill-pricetag"><?php esc_html_e( 'PriceTag Script', 'viabill' ); ?></label>
+              </th>
               <td class="forminp">
-                <?php
-                $lang_iso2 = 'en';
-                $lang = get_locale();
-                if (strlen($lang)>2) {
-                  $upos = strpos($lang, '_');
-                  if ($upos>0) {
-                    $lang_code = strtolower(substr($lang, 0, $upos));
-                    switch ($lang_code) {
-                      case 'da':
-                      case 'es':
-                      case 'en':
-                      $lang_iso2 = $lang_code;
-                      break;
-                    }
-                  }
-                }
-                $forgot_pass_url = 'https://my.viabill.com/merchant/'.$lang_iso2.'/#/auth/forgot';
-                ?>                
-                <a href="<?php echo esc_url($forgot_pass_url); ?>" target="_blank"><?php esc_html_e( 'Forgot password?', 'viabill' ); ?></a>
+                <textarea id="viabill-pricetag" name="viabill-pricetag" class="input-text wide-input" style="width: 400px; min-height: 120px;" required><?php echo esc_textarea( $pricetag ); ?></textarea>
+                <p class="description"><?php esc_html_e( 'Paste the whole PriceTag script snippet, including the <script> tags.', 'viabill' ); ?></p>
               </td>
             </tr>
-            <?php $this->do_submit( 'viabill-login', __( 'Login', 'viabill' ), 'viabill-login-action', 'viabill-login-nonce' ); ?>
+
+            <?php $this->do_submit( self::SLUG, __( 'Save Credentials', 'viabill' ), self::SLUG . '-action', self::SLUG . '-nonce' ); ?>
           </tbody>
         </table>
       </form>
@@ -498,39 +353,13 @@ if ( ! class_exists( 'Viabill_Registration' ) ) {
     public function register_settings_page() {
       add_submenu_page(
         'woocommerce',
-        __( 'ViaBill Login/Register', 'viabill' ),
-        __( 'ViaBill Login/Register', 'viabill' ),
+        __( 'ViaBill Account Credentials', 'viabill' ),
+        __( 'ViaBill Account Credentials', 'viabill' ),
         'manage_woocommerce',
         self::SLUG,
         array( $this, 'show' )
       );
     }
 
-    /**
-     * Sanitize and format the Tax ID (if given)
-     */
-    public function sanitize_tax_id($tax_id, $country) {
-       $tax_id = str_replace(array(' ','-'), '', trim($tax_id));
-       if ($country == 'ES') {        
-        $regex_with_prefix = '/^ES[0-9A-Z]*/';
-        if (preg_match($regex_with_prefix, $tax_id)) {
-          return $tax_id;
-        }
-        $regex_without_prefix = '/^[0-9A-Z]+/';
-        if (preg_match($regex_without_prefix, $tax_id)) {
-          return 'ES'.$tax_id;
-        }
-       } else if ($country == 'DK') {
-         $regex_with_prefix = '/^DK[0-9]{8}$/';
-         if (preg_match($regex_with_prefix, $tax_id)) {
-          return $tax_id;
-         }
-         $regex_without_prefix = '/^[0-9]{8}$/';
-         if (preg_match($regex_without_prefix, $tax_id)) {
-          return 'DK'.$tax_id;
-         }
-       }
-       return '';
-    }
   }
 }

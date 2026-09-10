@@ -14,7 +14,7 @@ For more information about ViaBill, please visit our [ViaBill](https://viabill.c
 
 ## Installation and Configuration
 
-Please follow the instructions in [INSTALL.md](INSTALL.md)
+Please follow the instructions in the [User Guide](ViaBill-WooCommerce-Installation-Guide-EN.pdf)
 
 # WordPress
 

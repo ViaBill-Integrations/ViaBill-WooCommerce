@@ -29,7 +29,50 @@ $captured_payment_status_label = wc_get_order_status_name( $captured_payment_sta
 $auto_capture_switch_description = sprintf(__( 'Select this option to automatically capture all approved ViaBill orders. All automatically captured orders will be updated with an order status of "%s". Selecting this option will also disable the option to partially capture the order amount.', 'viabill' ), $captured_payment_status_label);
 $auto_capture_order_switch_description = sprintf(__( 'Select this option in order to capture the whole order amount by manually switching the order status from, "%s" to "%s".', 'viabill' ), $authorized_payment_status_label, $captured_payment_status_label);
 
+$viabill_has_secret = (bool) get_option( 'viabill_secret', '' );
+
 return array(
+  'account-credentials' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'ViaBill Account Credentials', 'viabill' ),
+    'type'        => 'title',
+    'description' => __( 'Enter your ViaBill API key, API secret and PriceTag script. You can find these values in your ViaBill merchant account. All three values are required for the payment gateway and the PriceTags to work.', 'viabill' ),
+  ),
+  // These three fields are not stored inside the gateway settings array;
+  // they are extracted on save and stored in the standalone 'viabill_key',
+  // 'viabill_secret' and 'viabill_pricetag' options (see
+  // Viabill_Payment_Gateway::filter_settings_values()).
+  'viabill_api_key' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'             => __( 'API Key', 'viabill' ),
+    'type'              => 'text',
+    'description'       => __( 'Your ViaBill API key.', 'viabill' ),
+    'default'           => get_option( 'viabill_key', '' ),
+    'desc_tip'          => true,
+    'custom_attributes' => array( 'autocomplete' => 'off' ),
+  ),
+  'viabill_api_secret' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'             => __( 'API Secret', 'viabill' ),
+    'type'              => 'password',
+    'description'       => $viabill_has_secret ? __( 'Your ViaBill API secret. A secret is already saved (hidden for security); leave this field empty to keep it.', 'viabill' ) : __( 'Your ViaBill API secret.', 'viabill' ),
+    'default'           => '',
+    'desc_tip'          => false,
+    'custom_attributes' => array(
+      'autocomplete' => 'new-password',
+      'placeholder'  => $viabill_has_secret ? '********' : '',
+    ),
+  ),
+  'viabill_pricetag_script' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'PriceTag Script', 'viabill' ),
+    'type'        => 'textarea',
+    'description' => __( 'Paste the whole PriceTag script snippet provided by ViaBill, including the opening and closing script tags.', 'viabill' ),
+    'default'     => get_option( 'viabill_pricetag', '' ),
+    'desc_tip'    => false,
+    'css'         => 'min-height: 120px;',
+  ),
+  'payment-options' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Payment Options', 'viabill' ),
+    'type'        => 'title',
+    'description' => '',
+  ),
   'enabled' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'    => __( 'Enable', 'viabill' ),
     'type'     => 'checkbox',

@@ -74,17 +74,20 @@ if ( ! class_exists( 'Viabill_Merchant_Profile' ) ) {
         return false;
       }
 
-      $is_key_saved = update_option( 'viabill_key', $data['key'] );
+      // Note: update_option() returns false when the new value is identical
+      // to the stored one, so re-saving the same credentials must not be
+      // treated as a failure.
+      $is_key_saved = update_option( 'viabill_key', $data['key'] ) || get_option( 'viabill_key' ) === $data['key'];
       if ( ! $is_key_saved ) {
         $this->logger->log( 'Failed to save key in DB.', 'error' );
       }
 
-      $is_secret_saved = update_option( 'viabill_secret', $data['secret'] );
+      $is_secret_saved = update_option( 'viabill_secret', $data['secret'] ) || get_option( 'viabill_secret' ) === $data['secret'];
       if ( ! $is_secret_saved ) {
         $this->logger->log( 'Failed to save secret in DB.', 'error' );
       }
 
-      $is_pricetag_saved = update_option( 'viabill_pricetag', $data['pricetagScript'] );
+      $is_pricetag_saved = update_option( 'viabill_pricetag', $data['pricetagScript'] ) || get_option( 'viabill_pricetag' ) === $data['pricetagScript'];
       if ( ! $is_pricetag_saved ) {
         $this->logger->log( 'Failed to save priceTag in DB.', 'error' );
       }

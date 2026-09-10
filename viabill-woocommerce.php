@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.74
+ * Version: 1.1.77
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -174,12 +174,16 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
       $merchant = new Viabill_Merchant_Profile();
       $merchant->register_ajax_endpoints();
 
+      // Always load the payment gateway so that merchants can enter their
+      // ViaBill account credentials (API key, secret and PriceTag script)
+      // directly on the gateway's settings page, even before the credentials
+      // have been saved.
+      if ( ! self::is_payment_gateway_disabled() ) {
+          $this->init_payment_gateway();
+      }
+
       if ( Viabill_Main::is_merchant_registered() ) {
           $this->init_pricetags();
-
-          if ( ! self::is_payment_gateway_disabled() ) {
-              $this->init_payment_gateway();
-          }
       }
     }    
 
@@ -346,7 +350,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.74' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.77' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
