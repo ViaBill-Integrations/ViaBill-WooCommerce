@@ -515,15 +515,23 @@ if ( ! class_exists( 'Viabill_API' ) ) {
           'error'    => 'A checkout request for this order is already in progress. Please wait a moment.',
         ) ) );
       }
+
+      $viabill_user_agent = sprintf(
+          'ViaBill-WooCommerce/%s WooCommerce/%s WordPress/%s (+%s)',
+          VIABILL_PLUGIN_VERSION,
+          defined( 'WC_VERSION' ) ? WC_VERSION : 'unknown',
+          get_bloginfo( 'version' ),
+          home_url()
+      );
      
-      $url = $this->connector->get_checkout_url();
+      $url = $this->connector->get_checkout_url();      
 
       $method = 'POST';
 
       $headers = [
         //'Accept' => 'application/json',
         'Content-Type' => 'application/json',
-        'User-Agent' => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
+        'User-Agent' => $viabill_user_agent,
       ];                   
 
       $args = array(
@@ -532,7 +540,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
         'body' => $payload,
         'redirection' => 0,
         'httpversion' => '1.1',
-        'sslverify' => false,
+        'sslverify' => true,
         'timeout' => $http_request_timeout
       );
 

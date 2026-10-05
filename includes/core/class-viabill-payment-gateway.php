@@ -490,11 +490,19 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       ?>
 
       <h2><?php esc_html_e( 'ViaBill Payment Gateway', 'viabill' ); ?></h2>
-      <?php if ( ! Viabill_Main::is_merchant_registered() ) : ?>
+      <?php if ( ! Viabill_Main::is_merchant_registered() ) : ?>        
         <div class="notice notice-warning inline">
           <p>
             <b><?php esc_html_e( 'Your ViaBill account credentials are missing.', 'viabill' ); ?></b>
             <?php esc_html_e( 'Please enter your API key, API secret and PriceTag script in the "ViaBill Account Credentials" section below and save the settings.', 'viabill' ); ?>
+          </p>
+          <p>
+            <?php esc_html_e( "Don't have a ViaBill account yet? Create one in a few minutes and start offering ViaBill at checkout.", 'viabill' ); ?>
+          </p>
+          <p>
+            <a href="<?php echo esc_url( $this->get_signup_url() ); ?>" class="button-primary viabill-signup-link" target="_blank" rel="noopener noreferrer">
+              <?php esc_html_e( 'Sign up for ViaBill', 'viabill' ); ?>
+            </a>
           </p>
         </div>
       <?php endif; ?>
@@ -518,6 +526,24 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         <?php $this->generate_settings_html(); ?>
       </table>
       <?php
+    }
+
+    /**
+     * Returns the ViaBill merchant signup URL with tracking parameters.
+     *
+     * @return string
+     */
+    private function get_signup_url() {
+      $params = array(
+        'utm_source'          => 'woocommerce',
+        'utm_medium'          => 'ecommerce_extension',
+        'utm_campaign'        => 'merchant_signup',
+        'utm_content'         => 'settings_page',
+        'shop_url'            => home_url(),
+        'integration_version' => VIABILL_PLUGIN_VERSION,
+      );
+
+      return 'https://portal.viabill.com/signup?' . http_build_query( $params, '', '&', PHP_QUERY_RFC3986 );
     }
 
     /**

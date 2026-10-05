@@ -1237,3 +1237,40 @@ msgstr "Su nombre"
 #: includes/core/class-viabill-support.php:455
 msgid "Your request has been received successfully!"
 msgstr "¡Su solicitud se ha recibido correctamente!"
+
+#: includes/core/class-viabill-payment-gateway.php
+msgid "Don't have a ViaBill account yet? Create one in a few minutes and start offering ViaBill at checkout."
+msgstr "¿Aún no tienes una cuenta de ViaBill? Crea una en pocos minutos y empieza a ofrecer ViaBill en el proceso de pago."
+
+msgid "Sign up for ViaBill"
+msgstr "Regístrate en ViaBill"
+
+msgid "ViaBill Account Credentials"
+msgstr "Credenciales de la cuenta de ViaBill"
+
+msgid "Enter your ViaBill API key, API secret and PriceTag script. You can find these values in your ViaBill merchant account. All three values are required for the payment gateway and the PriceTags to work."
+msgstr "Introduce tu clave API, tu secreto API y el script de PriceTag de ViaBill. Puedes encontrar estos valores en tu cuenta de comerciante de ViaBill. Los tres valores son necesarios para que funcionen la pasarela de pago y los PriceTags."
+
+msgid "API Key"
+msgstr "Clave API"
+
+msgid "Your ViaBill API key."
+msgstr "Tu clave API de ViaBill."
+
+msgid "API Secret"
+msgstr "Secreto API"
+
+msgid "Your ViaBill API secret. A secret is already saved (hidden for security); leave this field empty to keep it."
+msgstr "Tu secreto API de ViaBill. Ya hay un secreto guardado (oculto por seguridad); deja este campo vacío para conservarlo."
+
+msgid "Your ViaBill API secret."
+msgstr "Tu secreto API de ViaBill."
+
+msgid "PriceTag Script"
+msgstr "Script de PriceTag"
+
+msgid "Paste the whole PriceTag script snippet provided by ViaBill, including the opening and closing script tags."
+msgstr "Pega el fragmento completo del script de PriceTag proporcionado por ViaBill, incluidas las etiquetas script de apertura y cierre."
+
+msgid "Payment Options"
+msgstr "Opciones de pago"
