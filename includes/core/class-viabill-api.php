@@ -150,14 +150,17 @@ if ( ! class_exists( 'Viabill_API' ) ) {
       $local_signature = hash( 'sha256', $signature_p1 . '#' . $signature_p2 );      
       $is_match        = $local_signature === $params['signature'];
 
+      // Signed string for the log, with the secret replaced by a placeholder.
+      $signature_p2_log = $params['status'] . '#' . $params['time'] . '#<secret>';
+
       if ( ! $is_match && ! $use_deprecated_id ) {
-        $signature_mismatch_info = "Mismatch info: Local signature with deprecated disabled is [".$signature_p1. ']#[' . $signature_p2.'] remote signature is '.$params['signature'];
+        $signature_mismatch_info = "Mismatch info: Local signature with deprecated disabled is [".$signature_p1. ']#[' . $signature_p2_log.'] remote signature is '.$params['signature'];
         $this->logger->log( $signature_mismatch_info, 'error' );
         return $this->is_signature_match( $order, $params, true );
       }
 
       if (! $is_match ) {
-        $signature_mismatch_info = "Mismatch info: Local signature with deprecated enabled is ".$signature_p1. '#' . $signature_p2.' remote signature is '.$params['signature'];
+        $signature_mismatch_info = "Mismatch info: Local signature with deprecated enabled is ".$signature_p1. '#' . $signature_p2_log.' remote signature is '.$params['signature'];
         $this->logger->log( $signature_mismatch_info, 'error' );
       }
 
@@ -214,7 +217,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
                 'is_success' => false,
                 'message'    => 'Couldn\'t find corresponding order.',
             ),
-            500
+            400
         );
 
         return;
@@ -229,7 +232,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
             'is_success' => false,
             'message'    => 'Couldn\'t find corresponding order.',
           ),
-          500
+          400
         );
       }
 
@@ -243,7 +246,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
             'is_success' => false,
             'message'    => 'Payment method is not ViaBill',
           ),
-          500
+          400
         );
       }
 
@@ -256,7 +259,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
             'is_success' => false,
             'message'    => 'Signature mismatch.',
           ),
-          500
+          400
         );
       }
 
@@ -269,7 +272,7 @@ if ( ! class_exists( 'Viabill_API' ) ) {
             'is_success' => false,
             'message'    => 'Order status already set.',
           ),
-          500
+          400
         );
       }
 

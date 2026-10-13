@@ -3,7 +3,7 @@
  * Plugin Name: ViaBill - WooCommerce
  * Plugin URI: https://www.viabill.dk/
  * Description: ViaBill Gateway for WooCommerce.
- * Version: 1.1.78
+ * Version: 1.1.79
  * Requires at least: 5.0
  * Requires PHP: 5.6
  * Author: ViaBill
@@ -350,7 +350,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         define( 'VIABILL_PLUGIN_ID', 'viabill_official' );
       }
       if ( ! defined( 'VIABILL_PLUGIN_VERSION' ) ) {
-        define( 'VIABILL_PLUGIN_VERSION', '1.1.78' );
+        define( 'VIABILL_PLUGIN_VERSION', '1.1.79' );
       }
       if ( ! defined( 'VIABILL_DIR_PATH' ) ) {
         define( 'VIABILL_DIR_PATH', plugin_dir_path( __FILE__ ) );
@@ -595,6 +595,7 @@ if ( ! class_exists( 'Viabill_Main' ) ) {
         'viabillAdminScript',
         array(
           'url'                           => admin_url( 'admin-ajax.php' ),
+          'my_viabill_nonce'              => wp_create_nonce( 'viabill-my-viabill-url' ),
           'order_id'                      => $current_order_id,
           'automatic_refund'              => self::get_gateway_settings( 'automatic-refund-status' ),
           'status_capture'                => self::get_gateway_settings( 'capture-order-on-status-switch' ),

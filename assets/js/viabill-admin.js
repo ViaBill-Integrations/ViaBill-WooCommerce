@@ -133,7 +133,7 @@ jQuery(document).ready(function( $ ) {
       // fetch viabill dashboard links via ajax.
       $.get(
         viabillAdminScript.url,
-        { action: 'get_my_viabill_url' }
+        { action: 'get_my_viabill_url', nonce: viabillAdminScript.my_viabill_nonce }
       ).done( function( url ) {
         if ( url !== undefined && url ) {
           $('.viabill-dashboard-link').each( function() {

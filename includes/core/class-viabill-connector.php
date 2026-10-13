@@ -659,6 +659,10 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      * @return string|array|bool
      */
     private function get_response_body( $response, $endpoint = '', $default_response = false ) {
+      // Log the end point without its query string: it carries the API key and
+      // the key#secret signature.
+      $endpoint = strtok( (string) $endpoint, '?' );
+
       if ( is_wp_error( $response ) ) {
         if ( $response->has_errors() ) {
           $message = $response->get_error_message();

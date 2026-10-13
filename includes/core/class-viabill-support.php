@@ -152,7 +152,7 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
       
       $action_url = $this->getActionURL();
 
-      $account_reset_url = admin_url('admin-post.php?action=reset_viabill_account');      
+      $account_reset_url = wp_nonce_url( admin_url( 'admin-post.php?action=reset_viabill_account' ), 'viabill-reset-account' );      
 
       ?>    
 
@@ -212,7 +212,7 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
             <label><?php echo __( 'Api Key', 'viabill');?></label>
             <input class="form-control" type="text" required="true"
              value="<?php echo  esc_attr($apiKey); ?>" name="shop_info[apikey]" />
-             <p>Not you? <a href="<?php echo $account_reset_url; ?>">Reset ViaBill Account</a></p>
+             <p>Not you? <a href="<?php echo esc_url( $account_reset_url ); ?>">Reset ViaBill Account</a></p>
         </div>
         <div class="form-group">
             <label><?php echo __( 'Eshop Country', 'viabill');?></label>
@@ -582,6 +582,13 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
      *  @return void
      */
     public function reset_viabill_account() {  
+        // Deletes the merchant's ViaBill credentials: shop managers only, and
+        // only from the link on the support page (nonce).
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_die( esc_html__( 'Sorry, you are not allowed to do this.', 'viabill' ), '', array( 'response' => 403 ) );
+        }
+        check_admin_referer( 'viabill-reset-account' );
+
         $merchant = new Viabill_Merchant_Profile();
         $merchant->delete_registration_data();
 
@@ -594,6 +601,7 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
         );
 
         wp_safe_redirect($redirect_url);
+        exit;
     }
 
   }

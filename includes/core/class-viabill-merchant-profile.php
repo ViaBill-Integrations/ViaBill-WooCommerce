@@ -49,6 +49,11 @@ if ( ! class_exists( 'Viabill_Merchant_Profile' ) ) {
      * Echo merchant's my ViaBill URL in JSON format.
      */
     public function do_my_viabill_url() {
+      // The URL logs into the merchant's ViaBill account: shop managers only.
+      if ( ! current_user_can( 'manage_woocommerce' ) || ! check_ajax_referer( 'viabill-my-viabill-url', 'nonce', false ) ) {
+        wp_send_json( '', 403 );
+      }
+
       $url = $this->connector->get_my_viabill_url();
       wp_send_json( $url );
       wp_die();
