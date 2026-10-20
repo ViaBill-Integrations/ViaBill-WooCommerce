@@ -281,7 +281,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
     public function capture( $order, $amount_to_capture = 0, $use_deprecated_id = false ) {
       
       if (!$this->is_viabill_payment($order->get_payment_method())) {
-        $this->logger->log( 'Request to capture order ' . $this->get_order_number($order) . ' failed, wrong payment method', 'notice' );
+        $this->logger->log( 'Request to capture order ' . $this->get_order_number($order) . ' failed, wrong payment method:'.$order->get_payment_method(), 'notice' );
         return array(
           'success' => false,
           'message' => __( 'Payment method is not ViaBill.', 'viabill' ),
@@ -455,7 +455,7 @@ if ( ! class_exists( 'Viabill_Connector' ) ) {
      */
     public function cancel( $order, $use_deprecated_id = false ) {
       if (!$this->is_viabill_payment($order->get_payment_method())) {
-        $this->logger->log( 'Request to cancel order ' . $this->get_order_number($order) . ' failed, wrong payment method', 'notice' );
+        $this->logger->log( 'Request to cancel order ' . $this->get_order_number($order) . ' failed, wrong payment method:'.$order->get_payment_method(), 'notice' );
         return array(
           'success' => false,
           'message' => __( 'Payment method is not ViaBill.', 'viabill' ),
