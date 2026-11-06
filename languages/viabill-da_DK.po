@@ -1234,3 +1234,39 @@ msgstr "Indsæt hele PriceTag-scriptet fra ViaBill, inklusive de åbnende og luk
 
 msgid "Payment Options"
 msgstr "Betalingsmuligheder"
+
+msgid "Warning! Borrow responsibly - it costs money."
+msgstr "Advarsel! Lån med omtanke - det koster penge."
+
+msgid "Legal Note"
+msgstr "Juridisk meddelelse"
+
+msgid "The legal note is a short information text shown to customers at checkout when ViaBill is selected as the payment method, such as a warning that borrowing money costs money."
+msgstr "Den juridiske meddelelse er en kort informationstekst, der vises for kunderne ved kassen, når ViaBill er valgt som betalingsmetode, f.eks. en advarsel om, at det koster penge at låne penge."
+
+msgid "Show the legal note at checkout"
+msgstr "Vis den juridiske meddelelse ved kassen"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Leave empty to use the default legal note, in the language selected below."
+msgstr "Lad feltet være tomt for at bruge standardmeddelelsen på det sprog, der er valgt nedenfor."
+
+msgid "Language"
+msgstr "Sprog"
+
+msgid "Language of the default legal note. \"Auto\" uses the language of the shop."
+msgstr "Sproget for standardmeddelelsen. \"Automatisk\" bruger butikkens sprog."
+
+msgid "Auto"
+msgstr "Automatisk"
+
+msgid "English"
+msgstr "Engelsk"
+
+msgid "Danish"
+msgstr "Dansk"
+
+msgid "Spanish"
+msgstr "Spansk"

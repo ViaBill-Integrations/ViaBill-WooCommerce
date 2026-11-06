@@ -243,6 +243,7 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-notices.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-support.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-api.php' );
+      require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-legal-note.php' );
 
       $this->connector = new Viabill_Connector();
       $this->api       = new Viabill_API();
@@ -564,6 +565,8 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
           echo $test_mode_notice;
         }
       }
+
+      echo Viabill_Legal_Note::get_html();
 
       // do_action( 'viabill_pricetag_after_payment_description' );
       do_action( 'viabill_pricetag_after_monthly_payment_description' );
@@ -1132,6 +1135,12 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         }
       }
 
+      // Show the default legal note, in the selected language, as the placeholder of the text field.
+      if ( isset( $fields[ Viabill_Legal_Note::TEXT_SETTING ] ) ) {
+        $language = isset( $this->settings[ Viabill_Legal_Note::LANGUAGE_SETTING ] ) ? $this->settings[ Viabill_Legal_Note::LANGUAGE_SETTING ] : 'auto';
+        $fields[ Viabill_Legal_Note::TEXT_SETTING ]['placeholder'] = Viabill_Legal_Note::get_default_text( $language );
+      }
+
       return $fields;
     }
 
@@ -1505,6 +1514,7 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-notices.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-support.php' );
       require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-api.php' );
+      require_once( VIABILL_DIR_PATH . '/includes/core/class-viabill-legal-note.php' );
 
       $this->connector = new Viabill_Connector();
       $this->api       = new Viabill_API();
@@ -1694,6 +1704,8 @@ if ( ! class_exists( 'Viabill_Try_Payment_Gateway' ) ) {
           echo $test_mode_notice;
         }
       }	  
+
+      echo Viabill_Legal_Note::get_html();
 
       // do_action( 'viabill_pricetag_after_payment_description' );
       do_action( 'viabill_pricetag_after_tbyb_payment_description' );

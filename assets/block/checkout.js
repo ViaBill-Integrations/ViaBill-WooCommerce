@@ -36,10 +36,18 @@
 		__( 'ViaBill - Monthly Payments', 'viabill' );
 
 	/* --------------------------------------------------------------------
-	 * 4. <p> description renderer (for both “content” and “edit”)
+	 * 4. <p> description and legal note renderer (for both “content” and “edit”)
+	 *    The legal note HTML is sanitized by PHP (wp_kses_post).
 	 * ------------------------------------------------------------------ */
 	const Description = () =>
-		el( 'p', null, decode( settings.description || '' ) );
+		el(
+			wp.element.Fragment,
+			null,
+			el( 'p', null, decode( settings.description || '' ) ),
+			settings.legalNote
+				? el( wp.element.RawHTML, null, settings.legalNote )
+				: null
+		);
 
 	/* --------------------------------------------------------------------
 	 * 5. Final registration object

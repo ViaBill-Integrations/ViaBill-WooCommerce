@@ -1120,3 +1120,40 @@ msgstr ""
 #: includes/core/class-viabill-support.php:455
 msgid "Your request has been received successfully!"
 msgstr ""
+
+
+msgid "Warning! Borrow responsibly - it costs money."
+msgstr ""
+
+msgid "Legal Note"
+msgstr ""
+
+msgid "The legal note is a short information text shown to customers at checkout when ViaBill is selected as the payment method, such as a warning that borrowing money costs money."
+msgstr ""
+
+msgid "Show the legal note at checkout"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Leave empty to use the default legal note, in the language selected below."
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Language of the default legal note. \"Auto\" uses the language of the shop."
+msgstr ""
+
+msgid "Auto"
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Danish"
+msgstr ""
+
+msgid "Spanish"
+msgstr ""

@@ -52,7 +52,7 @@ if ( ! class_exists( 'WC_Viabill_Blocks' ) ) {
         public function get_payment_method_script_handles() {
 			wp_register_script(
 				'wc-viabill-blocks-integration',
-				plugins_url( 'assets/block/checkout.js?v=3', dirname( __FILE__, 2 ) ),
+				plugins_url( 'assets/block/checkout.js?v=4', dirname( __FILE__, 2 ) ),
 				[ 'wc-blocks-registry', 'wp-element', 'wp-html-entities', 'wp-i18n', 'wc-settings' ],
 				null,
 				true
@@ -80,6 +80,7 @@ if ( ! class_exists( 'WC_Viabill_Blocks' ) ) {
 			return [
 				'title'       => $this->gateway->title,
 				'description' => $this->gateway->description,
+				'legalNote'   => Viabill_Legal_Note::get_html(),
 				'supports'    => [ 'products' ],
 			];
 		}

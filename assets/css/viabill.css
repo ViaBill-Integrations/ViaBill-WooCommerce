@@ -30,3 +30,13 @@ div.viabill_wrapper_alignment_center .viabill-pricetag {
 div.viabill_wrapper_alignment_center .viabill-pricetag iframe.viabill {
     width: 100% !important;
 }
+
+/* Legal note (credit warning) next to the ViaBill payment methods */
+.viabill-legal-note {
+    margin: 0.5em 0;
+    font-weight: 600;
+}
+
+.viabill-legal-note p {
+    margin: 0;
+}

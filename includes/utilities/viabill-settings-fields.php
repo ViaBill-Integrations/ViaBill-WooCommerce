@@ -121,6 +121,35 @@ return array(
     'default'     => __( 'Please click on the button below.', 'viabill' ),
     'desc_tip'    => true,
   ),
+  'legal-note-options' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Legal Note', 'viabill' ),
+    'type'        => 'title',
+    'description' => __( 'The legal note is a short information text shown to customers at checkout when ViaBill is selected as the payment method, such as a warning that borrowing money costs money.', 'viabill' ),
+  ),
+  Viabill_Legal_Note::ENABLED_SETTING => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'    => __( 'Enable', 'viabill' ),
+    'type'     => 'checkbox',
+    'label'    => __( 'Show the legal note at checkout', 'viabill' ),
+    'default'  => 'yes',
+    'desc_tip' => false,
+  ),
+  // The placeholder (the default text) is set in filter_settings_fields().
+  Viabill_Legal_Note::TEXT_SETTING => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Text', 'viabill' ),
+    'type'        => 'textarea',
+    'description' => __( 'Leave empty to use the default legal note, in the language selected below.', 'viabill' ),
+    'default'     => '',
+    'desc_tip'    => false,
+  ),
+  Viabill_Legal_Note::LANGUAGE_SETTING => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
+    'title'       => __( 'Language', 'viabill' ),
+    'type'        => 'select',
+    'description' => __( 'Language of the default legal note. "Auto" uses the language of the shop.', 'viabill' ),
+    'options'     => Viabill_Legal_Note::get_languages(),
+    'default'     => 'auto',
+    'class'       => 'wc-enhanced-select',
+    'desc_tip'    => false,
+  ),
   'advanced-options' => array( // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
     'title'       => __( 'Advanced options', 'viabill' ),
     'type'        => 'title',
