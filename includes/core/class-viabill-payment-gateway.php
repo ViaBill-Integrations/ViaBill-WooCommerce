@@ -1135,13 +1135,62 @@ if ( ! class_exists( 'Viabill_Payment_Gateway' ) ) {
         }
       }
 
-      // Show the default legal note, in the selected language, as the placeholder of the text field.
-      if ( isset( $fields[ Viabill_Legal_Note::TEXT_SETTING ] ) ) {
-        $language = isset( $this->settings[ Viabill_Legal_Note::LANGUAGE_SETTING ] ) ? $this->settings[ Viabill_Legal_Note::LANGUAGE_SETTING ] : 'auto';
-        $fields[ Viabill_Legal_Note::TEXT_SETTING ]['placeholder'] = Viabill_Legal_Note::get_default_text( $language );
+      return $fields;
+    }
+
+    /**
+     * Generate the read-only field that shows the legal note. It shows the
+     * legal note in the selected language, and follows the language select
+     * when it is changed. It has no name, so nothing is posted.
+     *
+     * @param  string $key  Field key.
+     * @param  array  $data Field data.
+     * @return string
+     */
+    public function generate_viabill_legal_note_text_html( $key, $data ) {
+      $field_key     = $this->get_field_key( $key );
+      $language_key  = $this->get_field_key( Viabill_Legal_Note::LANGUAGE_SETTING );
+      $language      = $this->get_option( Viabill_Legal_Note::LANGUAGE_SETTING, 'auto' );
+      $texts         = Viabill_Legal_Note::get_default_texts();
+      $text          = isset( $texts[ $language ] ) ? $texts[ $language ] : Viabill_Legal_Note::get_default_text( 'auto' );
+      $data          = wp_parse_args( $data, array( 'title' => '', 'description' => '', 'desc_tip' => false ) );
+
+      ob_start();
+      ?>
+      <tr valign="top">
+        <th scope="row" class="titledesc">
+          <label for="<?php echo esc_attr( $field_key ); ?>"><?php echo wp_kses_post( $data['title'] ); ?></label>
+        </th>
+        <td class="forminp">
+          <fieldset>
+            <legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
+            <textarea rows="2" cols="20" class="input-text wide-input" id="<?php echo esc_attr( $field_key ); ?>" readonly="readonly" style="background-color: #f6f7f7;" data-texts="<?php echo esc_attr( wp_json_encode( $texts ) ); ?>"><?php echo esc_textarea( $text ); ?></textarea>
+            <?php echo $this->get_description_html( $data ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          </fieldset>
+        </td>
+      </tr>
+      <?php
+      if ( function_exists( 'wc_enqueue_js' ) ) {
+        wc_enqueue_js(
+          'jQuery( "#' . esc_js( $language_key ) . '" ).on( "change", function() {'
+          . ' var $text = jQuery( "#' . esc_js( $field_key ) . '" ), texts = $text.data( "texts" ) || {};'
+          . ' if ( Object.prototype.hasOwnProperty.call( texts, this.value ) ) { $text.val( texts[ this.value ] ); }'
+          . ' } );'
+        );
       }
 
-      return $fields;
+      return ob_get_clean();
+    }
+
+    /**
+     * Validate the read-only legal note field: nothing is stored for it.
+     *
+     * @param  string $key   Field key.
+     * @param  mixed  $value Posted value (none, the field has no name).
+     * @return string
+     */
+    public function validate_viabill_legal_note_text_field( $key, $value ) {
+      return '';
     }
 
     /**

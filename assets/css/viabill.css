@@ -31,12 +31,19 @@ div.viabill_wrapper_alignment_center .viabill-pricetag iframe.viabill {
     width: 100% !important;
 }
 
-/* Legal note (credit warning) next to the ViaBill payment methods */
+/* Legal note (credit warning) next to the ViaBill payment methods. Its font
+   style and margins are set inline from the plugin settings. */
 .viabill-legal-note {
-    margin: 0.5em 0;
-    font-weight: 600;
+    margin: 0;
 }
 
+/* The paragraphs follow the styling set on the legal note box (plugin settings) */
 .viabill-legal-note p {
     margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    font-style: inherit;
+    color: inherit;
+    text-align: inherit;
+    line-height: inherit;
 }

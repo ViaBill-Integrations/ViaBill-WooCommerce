@@ -43,7 +43,7 @@ if ( ! class_exists( 'Viabill_Support' ) ) {
     /**
      * Contact email address
      */
-    const VIABILL_TECH_SUPPORT_EMAIL = 'tech@viabill.com';
+    const VIABILL_TECH_SUPPORT_EMAIL = 'teknik@viabill.com';
 
     /**
      * Number of lines to read from the log files (debug and error).

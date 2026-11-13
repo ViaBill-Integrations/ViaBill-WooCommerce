@@ -38,12 +38,15 @@
 	/* --------------------------------------------------------------------
 	 * 4. <p> description and legal note renderer (for both “content” and “edit”)
 	 *    The legal note HTML is sanitized by PHP (wp_kses_post).
+	 *    An empty description is not rendered: its empty <p> would add a
+	 *    paragraph margin between the payment method name and the legal note.
 	 * ------------------------------------------------------------------ */
+	const description = decode( settings.description || '' );
 	const Description = () =>
 		el(
 			wp.element.Fragment,
 			null,
-			el( 'p', null, decode( settings.description || '' ) ),
+			description ? el( 'p', null, description ) : null,
 			settings.legalNote
 				? el( wp.element.RawHTML, null, settings.legalNote )
 				: null
